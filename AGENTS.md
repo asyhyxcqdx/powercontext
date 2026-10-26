@@ -6,6 +6,8 @@
 
 Competition Source adapters live in `sources/csv_rows.py` and `sources/pi_session.py`; Pi checkpoints use the existing ConnectorLifecycle. HTTP Memory scoring lives in `builtin/artifacts/memory/http_reranker.py`, and shared embedding requests in `builtin/inference/coalescing.py`. `builtin/runtime/context_pack.py` implements the serialized incremental-context protocol used by `ScopedContextApplication.prepare_incremental`.
 
+`sources/pdf_pages.py` captures every physical PDF page and searches persisted page citations. Optional literal evidence selection lives in `builtin/runtime/evidence_selection.py`; offsets always refer to the original Memory body. `builtin/runtime/source_lifecycle.py` persists scoped dependency graphs in `pc_source_lifecycle_nodes` and reconciles native Memory states on event replay. Topic retrieval consults the same persisted availability while exact historical reads remain available. Embedded seekdb hybrid candidate retrieval uses `builtin/persistence/seekdb/memory_index.py` to combine both indexed channels in one statement.
+
 Source count triggers use the persisted journal head and each family's successful cursor in `builtin/runtime/processing_discovery.py`. Threshold admission creates an existing durable processing intent; the supervisor retains its ordinary retry behavior, Memory consumes one window, and Topic Memory completes its accepted wave. Count-enabled bindings reconcile bounded metadata pages periodically, including lineage-only writes.
 
 ## Build, Test, and Development Commands
@@ -14,7 +16,7 @@ Source count triggers use the persisted journal head and each family's successfu
 - `make skills-install`: install the recommended agent skills pinned in `skills-lock.json`; requires `npx` and a Codex restart.
 - `make check`: verify the lock file, run all pre-commit hooks, and run `ty check`.
 - `make test`: run `pytest` with doctest support.
-- Competition tests use `competition/.venv` (Python 3.12): `make -C competition test-csv test-pi test-rerank test-incremental test-embedding test-count-trigger`. Preserve the official tests and fixed runtime requirements. Public acceptance does not establish hidden quality or performance scores.
+- Competition tests use `competition/.venv` (Python 3.12): `make -C competition test` runs all ten code challenges. Preserve the official tests and fixed runtime requirements. Public acceptance does not establish hidden quality or performance scores.
 - `tox`: run tests and type checks across Python 3.11, 3.12, 3.13, and 3.14.
 - `make build`: clean `dist/` and build the wheel.
 - `make docs-test`: lint and build the static website, including API references.

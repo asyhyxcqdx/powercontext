@@ -1,0 +1,256 @@
+# Copyright (c) 2026 OceanBase.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Capture all physical PDF pages and retrieve exact, persisted page evidence."""
+
+from __future__ import annotations
+
+import hashlib
+import io
+import json
+import re
+from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, Field, field_validator
+
+from powercontext._lexical import LexicalRanker, terms
+from powercontext.artifacts import MemoryCitation
+from powercontext.sources import (
+    TEXT_EVIDENCE_PROJECTION_KEY,
+    AdapterSourceDefinition,
+    Source,
+    SourceDefinition,
+    SourceMaterialization,
+    TextEvidence,
+)
+
+if TYPE_CHECKING:
+    from powercontext.builtin.artifacts.memory import MemoryHit
+    from powercontext.builtin.runtime.application import ScopedMemoryApplication
+
+
+class PDFDocumentInput(BaseModel):
+    document_id: str
+    content: bytes
+
+    @field_validator("document_id")
+    @classmethod
+    def nonblank_document(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("document_id must not be blank")  # noqa: TRY003
+        return value
+
+
+class PDFPageInput(BaseModel):
+    document_id: str
+    document_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    page_number: int = Field(gt=0, strict=True)
+    text: str
+
+    @field_validator("document_id")
+    @classmethod
+    def nonblank_document(cls, value: str) -> str:
+        return PDFDocumentInput.nonblank_document(value)
+
+
+class PDFPageSource(Source):
+    page: PDFPageInput
+
+
+def parse_pdf_document(value: PDFDocumentInput) -> tuple[PDFPageInput, ...]:
+    """Materialize every page before returning, including empty physical pages."""
+
+    from pypdf import PdfReader
+
+    if not value.content.startswith(b"%PDF-") or b"%%EOF" not in value.content[-1024:]:
+        raise ValueError("Incomplete or invalid PDF document")  # noqa: TRY003
+    digest = hashlib.sha256(value.content).hexdigest()
+    try:
+        reader = PdfReader(io.BytesIO(value.content), strict=True)
+        if reader.is_encrypted:
+            reader.decrypt("")
+        return tuple(
+            PDFPageInput(
+                document_id=value.document_id,
+                document_sha256=digest,
+                page_number=number,
+                text=page.extract_text() or "",
+            )
+            for number, page in enumerate(reader.pages, 1)
+        )
+    except Exception as error:
+        raise ValueError("Unable to parse the complete PDF document") from error  # noqa: TRY003
+
+
+class _PDFPageAdapter:
+    input_class = PDFPageInput
+    source_class = PDFPageSource
+    name = "pdf-page"
+
+    async def resolve(self, value: PDFPageInput, /) -> PDFPageSource:
+        identity = json.dumps(
+            [value.document_id, value.document_sha256, value.page_number], ensure_ascii=False, separators=(",", ":")
+        )
+        return PDFPageSource(
+            name="pdf:" + hashlib.sha256(identity.encode()).hexdigest(),
+            materialization=SourceMaterialization.CAPTURED,
+            page=value,
+        )
+
+    async def read(self, source: PDFPageSource, /) -> PDFPageInput:
+        return source.page
+
+
+class _PDFPageProjection:
+    name = TEXT_EVIDENCE_PROJECTION_KEY.name
+    version = TEXT_EVIDENCE_PROJECTION_KEY.version
+    source_class = PDFPageSource
+    output_class: type[BaseModel] = TextEvidence
+
+    def project(self, source: PDFPageSource, /) -> TextEvidence:
+        page = source.page
+        return TextEvidence(
+            source_type="pdf-page",
+            source_id=source.name,
+            content=f"{page.document_id}\n{page.text}",
+            metadata={
+                "document_id": page.document_id,
+                "document_sha256": page.document_sha256,
+                "page_number": page.page_number,
+            },
+        )
+
+
+PDF_PAGE_SOURCE_DEFINITION: SourceDefinition[PDFPageInput, PDFPageSource, PDFPageInput] = AdapterSourceDefinition(
+    _PDFPageAdapter(), projections=(_PDFPageProjection(),)
+)
+
+# Domain vocabulary expands concepts, never document identities or question answers.
+_FINANCIAL_TERMS = (
+    (r"geograph|countr|territor|operates|regions", "geographic countries international operations segments markets"),
+    (r"legal|litigation|lawsuit|battles", "legal proceedings litigation contingencies claims lawsuits"),
+    (r"income statement|p&l|earnings|profit", "consolidated statements income operations earnings revenues"),
+    (
+        r"cash flow|ebitda|capex|depreciation",
+        "consolidated statements cash flows depreciation amortization capital spending",
+    ),
+    (r"balance sheet|assets|liabilities|working capital", "consolidated balance sheets assets liabilities current"),
+    (r"restructur", "restructuring impairment charges costs expenses"),
+    (r"capex|capital expenditure", "capital spending expenditures property plant equipment additions purchases"),
+    (r"revenue|sales", "revenue revenues net sales"),
+)
+
+
+async def search_pdf_pages(
+    memory: ScopedMemoryApplication, question: str, limit: int = 10
+) -> tuple[MemoryCitation, ...]:
+    """Search the scoped index, then rank full-page and local-passage evidence offline."""
+
+    from powercontext.builtin.runtime.models import GetMemoryEntryRequest
+
+    if type(limit) is not int or limit < 1:
+        raise ValueError("limit must be a positive integer")  # noqa: TRY003
+    if not question.strip():
+        return ()
+    expansions = [vocabulary for pattern, vocabulary in _FINANCIAL_TERMS if re.search(pattern, question, re.I)]
+    hits = await _retrieve_candidates(memory, question, expansions, limit)
+    ordered = _rank_candidates(hits, question, expansions)
+    selected: list[MemoryCitation] = []
+    seen_pages: set[str] = set()
+    for index in ordered:
+        hit = hits[index]
+        citation = MemoryCitation(
+            memory_ref=hit.memory_ref, entry_id=hit.entry_id, entry_version_id=hit.entry_version_id
+        )
+        record = await memory.get(GetMemoryEntryRequest(citation=citation))
+        source_ids = {source.source_id for source in record.entry.sources if source.source_id.startswith("pdf:")}
+        if not source_ids or seen_pages & source_ids:
+            continue
+        seen_pages.update(source_ids)
+        selected.append(citation)
+        if len(selected) == limit:
+            break
+    return tuple(selected)
+
+
+async def _retrieve_candidates(
+    memory: ScopedMemoryApplication, question: str, expansions: list[str], limit: int
+) -> list[MemoryHit]:
+    from powercontext.builtin.runtime.models import SearchMemoryRequest
+
+    queries = [question, *expansions]
+    # Short probes avoid the ordinary long-query admission threshold excluding a
+    # relevant page that supplies only one part of a multi-part financial question.
+    words = list(dict.fromkeys(re.findall(r"[a-zA-Z]{3,}", question)))
+    queries.extend(word for word in words if terms(word))
+    candidates = {}
+    for query in queries:
+        page = await memory.search(SearchMemoryRequest(query=query, mode="fts", limit=max(128, limit * 8)))
+        for hit in page.hits:
+            candidates.setdefault((hit.entry_id, hit.entry_version_id), hit)
+    return list(candidates.values())
+
+
+def _rank_candidates(hits: list[MemoryHit], question: str, expansions: list[str]) -> list[int]:
+    # Keep financial subjects, excluding answer-format instructions that can
+    # otherwise give rare but irrelevant words disproportionate BM25 weight.
+    question = re.sub(r"\bfy\s*(?=\d{4}\b)", "", question, flags=re.I)
+    instructions = frozenset(
+        terms(
+            "give response respond calculate define assume assuming perspective analyst rely relying "
+            "only directly explicitly outlined primarily important quantity unadjusted millions USD"
+        )
+    )
+    query_weights = {word: 1.0 for word in terms(question) if word not in instructions}
+    for word in terms(" ".join(expansions)):
+        query_weights.setdefault(word, 0.35)
+    bodies = [hit.text.partition("\n")[2] for hit in hits]
+    ranker = LexicalRanker(bodies)
+    passages: list[str] = []
+    owners: list[int] = []
+    for index, body in enumerate(bodies):
+        # Overlapping text windows also handle PDFs with a newline after every cell.
+        words = body.split()
+        for start in range(0, len(words), 80):
+            passages.append(" ".join(words[start : start + 160]))
+            owners.append(index)
+    passage_ranker = LexicalRanker(passages)
+    passage_scores = [0.0] * len(hits)
+    for index, owner in enumerate(owners):
+        passage_scores[owner] = max(passage_scores[owner], passage_ranker.score(index, query_weights))
+    question_terms = set(terms(question))
+    named_documents = _named_documents(hits, question)
+    scores = []
+    for index, hit in enumerate(hits):
+        identity_terms = set(terms(hit.text.partition("\n")[0]))
+        identity_overlap = len(identity_terms & question_terms) / max(1, len(identity_terms))
+        score = ranker.score(index, query_weights) + 0.45 * passage_scores[index]
+        score *= 1 + 0.75 * identity_overlap
+        if named_documents and hit.text.partition("\n")[0] not in named_documents:
+            score *= 0.05
+        scores.append(score)
+    return sorted(range(len(hits)), key=lambda index: (-scores[index], hits[index].entry_id))
+
+
+def _named_documents(hits: list[MemoryHit], question: str) -> set[str]:
+    """Recognize a company explicitly named in both query and document ID."""
+
+    compact_query = re.sub(r"[^a-z]", "", question.casefold())
+    named = set()
+    for document in {hit.text.partition("\n")[0] for hit in hits}:
+        prefix = re.split(r"(?:19|20)\d{2}", document, maxsplit=1)[0]
+        company = re.sub(r"[^a-z]", "", prefix.casefold())
+        if len(company) >= 3 and company in compact_query:
+            named.add(document)
+    return named

@@ -583,6 +583,7 @@ async def open_builtin_runtime(
         topic_memory_processing_available = _topic_memory_processing_available(config, processing_bindings)
         runtime = await resources.enter_async_context(
             BuiltinRuntime(
+                lifecycle_database=contexts.database,
                 code_service=await resources.enter_async_context(open_code_service(config.code, config.database)),
                 provider=contexts,
                 capabilities=RuntimeCapabilities(
@@ -967,10 +968,7 @@ async def open_builtin_contexts(
                 await contexts.aclose_usage_recorder()
         return
     experience_index = OceanBaseExperienceFTSIndex()
-    indexes = [OceanBaseMemoryFTSIndex()]
-    if embedding_model is not None:
-        indexes.append(OceanBaseMemoryVectorIndex(embedding_model.profile))
-    index = CompositeMemoryIndex(*indexes)
+    index = _mysql_memory_index(embedding_model, native_hybrid=isinstance(database, SeekDBConfig))
     topic_indexes: list[TopicMemoryIndex] = [OceanBaseTopicMemoryFTSIndex()]
     if embedding_model is not None:
         topic_indexes.append(OceanBaseTopicMemoryVectorIndex(embedding_model.profile))
@@ -1841,6 +1839,16 @@ def _external_skill_provider(settings: ExternalSkillsConfig) -> ExternalSkillPro
     if settings.host_id is None:
         raise BuiltinConfigurationError("external-skill-host")
     return AgentSkillProvider(host_id=settings.host_id, targets=settings.agent_targets)
+
+
+def _mysql_memory_index(embedding_model: EmbeddingModel | None, *, native_hybrid: bool) -> CompositeMemoryIndex:
+    if embedding_model is None:
+        return CompositeMemoryIndex(OceanBaseMemoryFTSIndex())
+    if native_hybrid:
+        from powercontext.builtin.persistence.seekdb.memory_index import SeekDBMemoryHybridIndex
+
+        return SeekDBMemoryHybridIndex(embedding_model.profile)
+    return CompositeMemoryIndex(OceanBaseMemoryFTSIndex(), OceanBaseMemoryVectorIndex(embedding_model.profile))
 
 
 def _search_modes(capabilities: MemoryCapabilities) -> tuple[MemorySearchMode, ...]:
