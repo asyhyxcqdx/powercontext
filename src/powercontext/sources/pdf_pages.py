@@ -19,12 +19,10 @@ from __future__ import annotations
 import hashlib
 import io
 import json
-import re
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, field_validator
 
-from powercontext._lexical import LexicalRanker, terms
 from powercontext.artifacts import MemoryCitation
 from powercontext.sources import (
     TEXT_EVIDENCE_PROJECTION_KEY,
@@ -34,6 +32,7 @@ from powercontext.sources import (
     SourceMaterialization,
     TextEvidence,
 )
+from powercontext.sources._pdf_search import PDFSearchQuery, plan_pdf_query, rank_pdf_candidates
 
 if TYPE_CHECKING:
     from powercontext.builtin.artifacts.memory import MemoryHit
@@ -136,21 +135,6 @@ PDF_PAGE_SOURCE_DEFINITION: SourceDefinition[PDFPageInput, PDFPageSource, PDFPag
     _PDFPageAdapter(), projections=(_PDFPageProjection(),)
 )
 
-# Domain vocabulary expands concepts, never document identities or question answers.
-_FINANCIAL_TERMS = (
-    (r"geograph|countr|territor|operates|regions", "geographic countries international operations segments markets"),
-    (r"legal|litigation|lawsuit|battles", "legal proceedings litigation contingencies claims lawsuits"),
-    (r"income statement|p&l|earnings|profit", "consolidated statements income operations earnings revenues"),
-    (
-        r"cash flow|ebitda|capex|depreciation",
-        "consolidated statements cash flows depreciation amortization capital spending",
-    ),
-    (r"balance sheet|assets|liabilities|working capital", "consolidated balance sheets assets liabilities current"),
-    (r"restructur", "restructuring impairment charges costs expenses"),
-    (r"capex|capital expenditure", "capital spending expenditures property plant equipment additions purchases"),
-    (r"revenue|sales", "revenue revenues net sales"),
-)
-
 
 async def search_pdf_pages(
     memory: ScopedMemoryApplication, question: str, limit: int = 10
@@ -163,9 +147,9 @@ async def search_pdf_pages(
         raise ValueError("limit must be a positive integer")  # noqa: TRY003
     if not question.strip():
         return ()
-    expansions = [vocabulary for pattern, vocabulary in _FINANCIAL_TERMS if re.search(pattern, question, re.I)]
-    hits = await _retrieve_candidates(memory, question, expansions, limit)
-    ordered = _rank_candidates(hits, question, expansions)
+    query = plan_pdf_query(question)
+    hits = await _retrieve_candidates(memory, query, limit)
+    ordered = rank_pdf_candidates(hits, query, limit)
     selected: list[MemoryCitation] = []
     seen_pages: set[str] = set()
     for index in ordered:
@@ -184,73 +168,12 @@ async def search_pdf_pages(
     return tuple(selected)
 
 
-async def _retrieve_candidates(
-    memory: ScopedMemoryApplication, question: str, expansions: list[str], limit: int
-) -> list[MemoryHit]:
+async def _retrieve_candidates(memory: ScopedMemoryApplication, query: PDFSearchQuery, limit: int) -> list[MemoryHit]:
     from powercontext.builtin.runtime.models import SearchMemoryRequest
 
-    queries = [question, *expansions]
-    # Short probes avoid the ordinary long-query admission threshold excluding a
-    # relevant page that supplies only one part of a multi-part financial question.
-    words = list(dict.fromkeys(re.findall(r"[a-zA-Z]{3,}", question)))
-    queries.extend(word for word in words if terms(word))
     candidates = {}
-    for query in queries:
-        page = await memory.search(SearchMemoryRequest(query=query, mode="fts", limit=max(128, limit * 8)))
+    for probe in query.probes:
+        page = await memory.search(SearchMemoryRequest(query=probe, mode="fts", limit=max(256, limit * 12)))
         for hit in page.hits:
             candidates.setdefault((hit.entry_id, hit.entry_version_id), hit)
     return list(candidates.values())
-
-
-def _rank_candidates(hits: list[MemoryHit], question: str, expansions: list[str]) -> list[int]:
-    # Keep financial subjects, excluding answer-format instructions that can
-    # otherwise give rare but irrelevant words disproportionate BM25 weight.
-    question = re.sub(r"\bfy\s*(?=\d{4}\b)", "", question, flags=re.I)
-    instructions = frozenset(
-        terms(
-            "give response respond calculate define assume assuming perspective analyst rely relying "
-            "only directly explicitly outlined primarily important quantity unadjusted millions USD"
-        )
-    )
-    query_weights = {word: 1.0 for word in terms(question) if word not in instructions}
-    for word in terms(" ".join(expansions)):
-        query_weights.setdefault(word, 0.35)
-    bodies = [hit.text.partition("\n")[2] for hit in hits]
-    ranker = LexicalRanker(bodies)
-    passages: list[str] = []
-    owners: list[int] = []
-    for index, body in enumerate(bodies):
-        # Overlapping text windows also handle PDFs with a newline after every cell.
-        words = body.split()
-        for start in range(0, len(words), 80):
-            passages.append(" ".join(words[start : start + 160]))
-            owners.append(index)
-    passage_ranker = LexicalRanker(passages)
-    passage_scores = [0.0] * len(hits)
-    for index, owner in enumerate(owners):
-        passage_scores[owner] = max(passage_scores[owner], passage_ranker.score(index, query_weights))
-    question_terms = set(terms(question))
-    named_documents = _named_documents(hits, question)
-    scores = []
-    for index, hit in enumerate(hits):
-        identity_terms = set(terms(hit.text.partition("\n")[0]))
-        identity_overlap = len(identity_terms & question_terms) / max(1, len(identity_terms))
-        score = ranker.score(index, query_weights) + 0.45 * passage_scores[index]
-        score *= 1 + 0.75 * identity_overlap
-        if named_documents and hit.text.partition("\n")[0] not in named_documents:
-            score *= 0.05
-        scores.append(score)
-    return sorted(range(len(hits)), key=lambda index: (-scores[index], hits[index].entry_id))
-
-
-def _named_documents(hits: list[MemoryHit], question: str) -> set[str]:
-    """Recognize a company explicitly named in both query and document ID."""
-
-    compact_query = re.sub(r"[^a-z]", "", question.casefold())
-    named = set()
-    for document in {hit.text.partition("\n")[0] for hit in hits}:
-        prefix = re.split(r"(?:19|20)\d{2}", document, maxsplit=1)[0]
-        company = re.sub(r"[^a-z]", "", prefix.casefold())
-        if len(company) >= 3 and company in compact_query:
-            named.add(document)
-    return named
