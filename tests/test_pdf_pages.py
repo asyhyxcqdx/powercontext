@@ -15,18 +15,23 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import io
 import re
+import zlib
 from collections import Counter
+from typing import cast
 
 import pytest
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     NameObject,
     NumberObject,
+    StreamObject,
 )
 
 from powercontext.sources import SourceDefinitionRegistry
@@ -135,3 +140,71 @@ def test_character_positioning_preserves_words_numbers_and_unicode(form):
         assert expected in text
     expected_words = "Revenue 2022 2021 Operating income 1234 1111 Net profit Cash flow Rotated total 789 中文"
     assert Counter(re.findall(r"\w+", text)) == Counter(re.findall(r"\w+", expected_words))
+
+
+def test_form_inherits_the_fonts_of_each_page():
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_positioned_text_document(form=True))))
+    first, second = writer.pages
+    first_resources = cast(DictionaryObject, first["/Resources"])
+    xobjects = cast(DictionaryObject, first_resources["/XObject"])
+    form = cast(DictionaryObject, xobjects["/Fm"].get_object())
+    first_resources[NameObject("/Font")] = cast(DictionaryObject, form["/Resources"])["/Font"]
+    del form["/Resources"]
+    second[NameObject("/Contents")] = first["/Contents"]
+    second_resources = DictionaryObject(first_resources)
+    second[NameObject("/Resources")] = second_resources
+    fonts = DictionaryObject(cast(DictionaryObject, first_resources["/Font"]))
+    alternate = DictionaryObject(cast(DictionaryObject, fonts["/F2"].get_object()))
+    cmap = DecodedStreamObject()
+    original_cmap = cast(StreamObject, alternate["/ToUnicode"])
+    cmap.set_data(original_cmap.get_data().replace(b"<4E2D>", b"<7532>").replace(b"<6587>", b"<4E59>"))
+    alternate[NameObject("/ToUnicode")] = cmap
+    fonts[NameObject("/F2")] = alternate
+    second_resources[NameObject("/Font")] = fonts
+    stream = io.BytesIO()
+    writer.write(stream)
+    pages = parse_pdf_document(PDFDocumentInput(document_id="inherited", content=stream.getvalue()))
+    assert "中文" in pages[0].text and "甲乙" in pages[1].text
+    assert all("Revenue 2022 2021" in page.text for page in pages)
+
+
+def _compressed_document(payload: bytes, *, chained: bool, encrypted: bool = False) -> bytes:
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_positioned_text_document(form=False))))
+    stream = EncodedStreamObject()
+    stream[NameObject("/Filter")] = (
+        ArrayObject([NameObject("/ASCII85Decode"), NameObject("/FlateDecode")])
+        if chained
+        else NameObject("/FlateDecode")
+    )
+    StreamObject.set_data(stream, base64.a85encode(payload, adobe=True) if chained else payload)
+    writer.pages[1][NameObject("/Contents")] = writer._add_object(stream)
+    if encrypted:
+        writer.encrypt(user_password="", owner_password="owner", algorithm="AES-256")  # noqa: S106 -- fixture password
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    return buffer.getvalue()
+
+
+@pytest.mark.parametrize("chained", [False, True])
+@pytest.mark.parametrize("damage", ["header", "truncated", "checksum"])
+def test_corrupt_compressed_page_rejects_the_whole_document(chained, damage):
+    payload = zlib.compress(b"BT /F1 10 Tf 30 700 Td (Revenue 1234) Tj ET")
+    if damage == "header":
+        payload = b"invalid" + payload[7:]
+    elif damage == "truncated":
+        payload = payload[:-6]
+    else:
+        payload = payload[:-1] + bytes([payload[-1] ^ 1])
+    raw = _compressed_document(payload, chained=chained)
+    with pytest.raises(ValueError):
+        parse_pdf_document(PDFDocumentInput(document_id="corrupt-stream", content=raw))
+
+
+@pytest.mark.parametrize("chained", [False, True])
+def test_valid_compressed_empty_page_with_empty_password_is_preserved(chained):
+    raw = _compressed_document(zlib.compress(b""), chained=chained, encrypted=True)
+    pages = parse_pdf_document(PDFDocumentInput(document_id="empty-stream", content=raw))
+    assert len(pages) == 2 and pages[1].text == ""
+    assert "Revenue 2022 2021" in pages[0].text

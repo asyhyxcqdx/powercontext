@@ -16,9 +16,20 @@
 
 from __future__ import annotations
 
+import zlib
 from typing import TYPE_CHECKING
 
-from pypdf.generic import ArrayObject, ContentStream, DecodedStreamObject, DictionaryObject, NameObject, PdfObject
+from pypdf import get_configuration
+from pypdf.filters import decode_stream_data
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DecodedStreamObject,
+    DictionaryObject,
+    NameObject,
+    PdfObject,
+    StreamObject,
+)
 
 if TYPE_CHECKING:
     from pypdf import PageObject, PdfReader
@@ -30,27 +41,78 @@ def extract_page_text(page: PageObject, reader: PdfReader) -> str:
     contents = page.get("/Contents")
     if contents is None:
         return page.extract_text() or ""
-    page[NameObject("/Contents")] = _normalized_content(contents, page.get("/Resources"), reader, {})
+    original_resources = page.get("/Resources")
+    resources = _copy_resources(original_resources)
+    normalized = _normalized_content(contents, resources, reader, set())
+    page[NameObject("/Contents")] = normalized
+    page[NameObject("/Resources")] = resources
     try:
         return page.extract_text() or ""
     finally:
         # Do not retain every page's parsed operator list for the whole report.
         page[NameObject("/Contents")] = contents
+        if original_resources is None:
+            del page["/Resources"]
+        else:
+            page[NameObject("/Resources")] = original_resources
+
+
+def _copy_resources(value: PdfObject | None) -> DictionaryObject:
+    original = value.get_object() if value is not None else None
+    resources = DictionaryObject(original) if isinstance(original, DictionaryObject) else DictionaryObject()
+    xobjects = resources.get("/XObject")
+    xobjects = xobjects.get_object() if xobjects is not None else None
+    if isinstance(xobjects, DictionaryObject):
+        resources[NameObject("/XObject")] = DictionaryObject(xobjects)
+    return resources
+
+
+def _validate_compression(contents: PdfObject) -> None:
+    source = contents.get_object()
+    if isinstance(source, ArrayObject):
+        for item in source:
+            _validate_compression(item)
+        return
+    if not isinstance(source, StreamObject):
+        return
+    filters = source.get("/Filter")
+    if filters is None:
+        return
+    filters = filters.get_object()
+    filters = list(filters) if isinstance(filters, ArrayObject) else [filters]
+    for index, filter_name in enumerate(filters):
+        if filter_name not in {"/FlateDecode", "/Fl"}:
+            continue
+        # The base StreamObject method returns encoded bytes; the subclass's
+        # decoder deliberately recovers truncated/corrupt deflate streams.
+        data = StreamObject.get_data(source)
+        if index:
+            prefix = DecodedStreamObject()
+            prefix.set_data(data)
+            prefix[NameObject("/Filter")] = ArrayObject(filters[:index])
+            parameters = source.get("/DecodeParms")
+            if parameters is not None:
+                prefix[NameObject("/DecodeParms")] = parameters.get_object()
+            data = decode_stream_data(prefix)
+        inflater = zlib.decompressobj()
+        inflater.decompress(data, max_length=get_configuration().zlib_maximum_output_length)
+        if not inflater.eof:
+            raise ValueError("Incomplete or oversized PDF text stream")  # noqa: TRY003
 
 
 def _normalized_content(
     contents: PdfObject,
-    resources: PdfObject | None,
+    resources: DictionaryObject,
     reader: PdfReader,
-    forms: dict[int, DecodedStreamObject],
+    active_forms: set[int],
 ) -> ContentStream:
     # Keep encoded glyphs as bytes. Auto-decoding content strings here would
     # bypass the font's ToUnicode map when pypdf extracts the normalized stream.
+    _validate_compression(contents)
     stream = ContentStream(contents, reader, forced_encoding="bytes")
     operations = list(stream.operations)
-    resource_dict = resources.get_object() if resources is not None else None
-    xobjects = resource_dict.get("/XObject") if isinstance(resource_dict, DictionaryObject) else None
-    xobjects = xobjects.get_object() if xobjects is not None else None
+    xobjects = resources.get("/XObject")
+    prepared_forms: set[str] = set()
     for index, (operands, operator) in enumerate(operations):
         if operator == b"TJ" and index + 1 < len(operations) and operations[index + 1][1] == b"ET":
             items = list(operands[0])
@@ -60,18 +122,24 @@ def _normalized_content(
                 items.pop()
             operations[index] = ([ArrayObject(items)], operator)
         elif operator == b"Do" and isinstance(xobjects, DictionaryObject) and operands:
+            name = str(operands[0])
+            if name in prepared_forms:
+                continue
             form = xobjects[operands[0]].get_object()
             if not isinstance(form, DictionaryObject) or form.get("/Subtype") != "/Form":
                 continue
             identity = id(form)
-            if identity not in forms:
-                replacement = DecodedStreamObject()
-                replacement.update({
-                    key: value for key, value in form.items() if key not in {"/Length", "/Filter", "/DecodeParms"}
-                })
-                forms[identity] = replacement
-                normalized = _normalized_content(form, form.get("/Resources", resources), reader, forms)
-                replacement.set_data(normalized.get_data())
-            xobjects[operands[0]] = forms[identity]
+            if identity in active_forms:
+                raise ValueError("Recursive PDF form")  # noqa: TRY003
+            replacement = DecodedStreamObject()
+            replacement.update({
+                key: value for key, value in form.items() if key not in {"/Length", "/Filter", "/DecodeParms"}
+            })
+            inherited = _copy_resources(form.get("/Resources", resources))
+            replacement[NameObject("/Resources")] = inherited
+            normalized = _normalized_content(form, inherited, reader, active_forms | {identity})
+            replacement.set_data(normalized.get_data())
+            xobjects[operands[0]] = replacement
+            prepared_forms.add(name)
     stream.operations = operations
     return stream
