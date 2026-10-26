@@ -72,6 +72,8 @@ def parse_pdf_document(value: PDFDocumentInput) -> tuple[PDFPageInput, ...]:
 
     from pypdf import PdfReader
 
+    from powercontext.sources._pdf_text import extract_page_text
+
     if not value.content.startswith(b"%PDF-") or b"%%EOF" not in value.content[-1024:]:
         raise ValueError("Incomplete or invalid PDF document")  # noqa: TRY003
     digest = hashlib.sha256(value.content).hexdigest()
@@ -84,7 +86,7 @@ def parse_pdf_document(value: PDFDocumentInput) -> tuple[PDFPageInput, ...]:
                 document_id=value.document_id,
                 document_sha256=digest,
                 page_number=number,
-                text=page.extract_text() or "",
+                text=extract_page_text(page, reader),
             )
             for number, page in enumerate(reader.pages, 1)
         )
