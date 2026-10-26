@@ -4,12 +4,17 @@
 
 `powercontext` is a Python package built with `uv` and Hatchling. Runtime code lives in `src/powercontext/`; keep public package exports in `src/powercontext/__init__.py` and place new modules beside related code. Tests live in `tests/`; organize focused tests around observable behavior and keep cross-component acceptance scenarios in `tests/e2e/`. Documentation is split by locale under `docs/en/` and `docs/zh/`, with RFC material in each locale's `rfcs/` directory. The Fumadocs site lives in `website/`; its generated `content/docs/`, `.generated/`, and `out/` directories are not source material.
 
+Competition Source adapters live in `sources/csv_rows.py` and `sources/pi_session.py`; Pi checkpoints use the existing ConnectorLifecycle. HTTP Memory scoring lives in `builtin/artifacts/memory/http_reranker.py`, and shared embedding requests in `builtin/inference/coalescing.py`. `builtin/runtime/context_pack.py` implements the serialized incremental-context protocol used by `ScopedContextApplication.prepare_incremental`.
+
+Source count triggers use the persisted journal head and each family's successful cursor in `builtin/runtime/processing_discovery.py`. Threshold admission creates an existing durable processing intent; the supervisor retains its ordinary retry behavior, Memory consumes one window, and Topic Memory completes its accepted wave. Count-enabled bindings reconcile bounded metadata pages periodically, including lineage-only writes.
+
 ## Build, Test, and Development Commands
 
 - `make install`: run `uv sync` and install `prek` hooks.
 - `make skills-install`: install the recommended agent skills pinned in `skills-lock.json`; requires `npx` and a Codex restart.
 - `make check`: verify the lock file, run all pre-commit hooks, and run `ty check`.
 - `make test`: run `pytest` with doctest support.
+- Competition tests use `competition/.venv` (Python 3.12): `make -C competition test-csv test-pi test-rerank test-incremental test-embedding test-count-trigger`. Preserve the official tests and fixed runtime requirements. Public acceptance does not establish hidden quality or performance scores.
 - `tox`: run tests and type checks across Python 3.11, 3.12, 3.13, and 3.14.
 - `make build`: clean `dist/` and build the wheel.
 - `make docs-test`: lint and build the static website, including API references.
