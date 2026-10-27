@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LitMemory · 有记忆的科研文献助手</title>
+  <meta name="description" content="LitMemory 用 seekdb 做混合语义检索，用 PowerContext 保存跨会话研究记忆，自动起草组会周报。" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#/dashboard">
+        <span class="brand-mark">L</span>
+        <span class="brand-text">
+          <strong>LitMemory</strong>
+          <small>科研文献记忆助手</small>
+        </span>
+      </a>
+
+      <nav class="nav" id="nav">
+        <a href="#/dashboard" data-route="dashboard">
+          <span class="nav-icon">◈</span><span>工作台</span>
+        </a>
+        <a href="#/library" data-route="library">
+          <span class="nav-icon">▤</span><span>文献库</span>
+        </a>
+        <a href="#/search" data-route="search">
+          <span class="nav-icon">⌕</span><span>语义检索</span>
+        </a>
+        <a href="#/memory" data-route="memory">
+          <span class="nav-icon">◎</span><span>研究记忆</span>
+        </a>
+        <a href="#/report" data-route="report">
+          <span class="nav-icon">✎</span><span>组会周报</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="stack-label">技术底座</div>
+        <div class="stack-item"><b>seekdb</b><span>混合检索 · 向量 + 全文</span></div>
+        <div class="stack-item"><b>PowerContext</b><span>跨会话研究记忆</span></div>
+        <div class="scope-line" id="scope-line">scope · —</div>
+      </div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <button class="menu-btn" id="menu-btn" aria-label="菜单">☰</button>
+        <div class="crumbs" id="crumbs">工作台</div>
+        <div class="topbar-right">
+          <span class="status-pill" id="status-pill"><i></i><span>连接中…</span></span>
+        </div>
+      </header>
+
+      <main id="view" class="view"><div class="loading">加载中…</div></main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" id="modal-card" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <div class="toast-stack" id="toasts"></div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

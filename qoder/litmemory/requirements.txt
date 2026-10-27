@@ -1,0 +1,8 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+httpx>=0.28
+python-dotenv>=1.0
+pyseekdb==1.4.0.post1
+fastembed>=0.9
+pymysql>=1.1
+powercontext[cli,server] @ git+https://github.com/oceanbase/powercontext.git@archive/powercontext-main
