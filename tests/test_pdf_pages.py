@@ -208,3 +208,46 @@ def test_valid_compressed_empty_page_with_empty_password_is_preserved(chained):
     pages = parse_pdf_document(PDFDocumentInput(document_id="empty-stream", content=raw))
     assert len(pages) == 2 and pages[1].text == ""
     assert "Revenue 2022 2021" in pages[0].text
+
+
+@pytest.mark.parametrize("form", [False, True])
+@pytest.mark.parametrize("payload", [b"BT (Revenue) Tj", b"ET", b"BT BT ET ET"])
+def test_invalid_text_object_on_later_page_rejects_complete_document(form, payload):
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_positioned_text_document(form=False))))
+    stream = DecodedStreamObject()
+    stream.set_data(payload)
+    page = writer.pages[1]
+    if form:
+        stream.update({
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/BBox"): ArrayObject([NumberObject(n) for n in (0, 0, 600, 800)]),
+        })
+        page[NameObject("/Resources")] = DictionaryObject({
+            NameObject("/XObject"): DictionaryObject({NameObject("/Fm"): writer._add_object(stream)})
+        })
+        stream = DecodedStreamObject()
+        stream.set_data(b"q /Fm Do Q")
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    with pytest.raises(ValueError):
+        parse_pdf_document(PDFDocumentInput(document_id="invalid-text-object", content=buffer.getvalue()))
+
+
+def test_text_object_can_span_page_content_streams():
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_positioned_text_document(form=False))))
+    page = writer.pages[0]
+    streams = []
+    for payload in (b"BT /F1 10 Tf 30 700 Td (Revenue ) Tj\n", b"(1234) Tj ET\n"):
+        stream = DecodedStreamObject()
+        stream.set_data(payload)
+        streams.append(writer._add_object(stream))
+    page[NameObject("/Contents")] = ArrayObject(streams)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    pages = parse_pdf_document(PDFDocumentInput(document_id="split-stream", content=buffer.getvalue()))
+    assert "Revenue 1234" in pages[0].text
+    assert len(pages) == 2 and pages[1].text == ""

@@ -113,7 +113,19 @@ def _normalized_content(
     operations = list(stream.operations)
     xobjects = resources.get("/XObject")
     prepared_forms: set[str] = set()
+    # pypdf's strict reader still accepts unbalanced text objects. Validate
+    # the concatenated page contents (or an individual Form), not each
+    # constituent stream: a legal text object can span a /Contents array.
+    in_text_object = False
     for index, (operands, operator) in enumerate(operations):
+        if operator == b"BT":
+            if in_text_object:
+                raise ValueError("Nested PDF text object")  # noqa: TRY003
+            in_text_object = True
+        elif operator == b"ET":
+            if not in_text_object:
+                raise ValueError("Unmatched PDF text object end")  # noqa: TRY003
+            in_text_object = False
         if operator == b"TJ" and index + 1 < len(operations) and operations[index + 1][1] == b"ET":
             items = list(operands[0])
             # ET discards this text position. A trailing TJ adjustment moves no
@@ -141,5 +153,7 @@ def _normalized_content(
             replacement.set_data(normalized.get_data())
             xobjects[operands[0]] = replacement
             prepared_forms.add(name)
+    if in_text_object:
+        raise ValueError("Unterminated PDF text object")  # noqa: TRY003
     stream.operations = operations
     return stream
