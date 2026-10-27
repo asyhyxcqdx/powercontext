@@ -9,6 +9,10 @@ LitMemory 面向科研过程中的真实痛点：论文读完就忘、笔记散�
 
 > 赛题要求的技术栈不是装饰：检索页的每一次查询都实际走 seekdb 的 HNSW 向量索引 + IK 全文索引 + RRF 融合；研究记忆页的写入与召回都实际调用 PowerContext Server 的 Memory API。
 
+- 项目官网：https://litmemory-c8a8093w5oo.qoder.zone
+- 在线体验：https://rebates-summer-tale-solely.trycloudflare.com（临时隧道，失效时按本文档本地启动）
+- 开发记录：[docs/qoder-devlog.md](docs/qoder-devlog.md) · 验证记录：[docs/verification.md](docs/verification.md)
+
 ---
 
 ## 一、功能
