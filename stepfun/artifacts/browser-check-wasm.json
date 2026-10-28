@@ -1,0 +1,186 @@
+{
+  "at": "2026-10-28T05:38:38.462Z",
+  "browser": "156.0.8078.4",
+  "checks": [
+    "WebGPU-disabled browser automatically selects WASM and displays fallback",
+    "browser embedding -> real seekdb import -> hybrid search retrieves relevant original text",
+    "actual file picker imports a text document",
+    "repeat import is idempotent",
+    "new document visible after index refresh",
+    "switching collections is isolated",
+    "switching back preserves documents",
+    "invalid vectors rejected",
+    "browser reload recovers persisted data",
+    "all browser requests stay on local app origin; no cloud inference request"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/config.json"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/tokenizer_config.json"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/tokenizer.json"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/tokenizer.json"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/tokenizer_config.json"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.wasm"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/open"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/data/evaluation.json"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/import"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/search"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/import"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/data/evaluation.json"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/import"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/import"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/search"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/open"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/search"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/open"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/search"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/import"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/style.css"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/app.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/library.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/config.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/embed-worker.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/api/libraries"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/transformers/transformers.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/config.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.mjs"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8787/vendor/ort/ort-wasm-simd-threaded.asyncify.wasm"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/open"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8787/api/search"
+    }
+  ]
+}

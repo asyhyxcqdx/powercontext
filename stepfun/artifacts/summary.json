@@ -1,0 +1,112 @@
+{
+  "measuredAt": "2026-10-28T05:40:10.103Z",
+  "dataset": {
+    "documents": 32,
+    "queries": 12,
+    "repetitions": 3,
+    "warmRepetitions": 2
+  },
+  "modelRevision": "751bff37182d3f1213fa05d7196b954e230abad9",
+  "summaries": [
+    {
+      "file": "benchmark-fp32-wasm-b1.json",
+      "dtype": "fp32",
+      "backend": "wasm",
+      "batch": 1,
+      "modelBytes": 91100408,
+      "modelLoadMs": 2324.625,
+      "coldEmbedMs": 856.4799998998642,
+      "warmEmbedMs": 672.8800000548363,
+      "documentsPerSecond": 47.55677089138058,
+      "writeMs": 977.7393570000058,
+      "refreshMs": 301.4431834999996,
+      "queryEmbedMs": 12.152499973773956,
+      "dbMs": 7.243569999998726,
+      "e2eMs": 23.257500052452087,
+      "recall": 0.875,
+      "ndcg": 0.8576691957798506,
+      "host": {
+        "platform": "linux",
+        "release": "6.8.0-136-generic",
+        "architecture": "x64",
+        "cpu": "AMD EPYC 7K62 48-Core Processor",
+        "browser": "156.0.8078.4"
+      }
+    },
+    {
+      "file": "benchmark-q8-wasm-b1.json",
+      "dtype": "q8",
+      "backend": "wasm",
+      "batch": 1,
+      "modelBytes": 23685172,
+      "modelLoadMs": 1621.1200000047684,
+      "coldEmbedMs": 771.5950000286102,
+      "warmEmbedMs": 616.210000038147,
+      "documentsPerSecond": 51.930348416966645,
+      "writeMs": 965.4058689999947,
+      "refreshMs": 351.4509029999972,
+      "queryEmbedMs": 11.875,
+      "dbMs": 7.191519499996502,
+      "e2eMs": 22.49750006198883,
+      "recall": 0.875,
+      "ndcg": 0.8643591300175016,
+      "host": {
+        "platform": "linux",
+        "release": "6.8.0-136-generic",
+        "architecture": "x64",
+        "cpu": "AMD EPYC 7K62 48-Core Processor",
+        "browser": "156.0.8078.4"
+      }
+    },
+    {
+      "file": "benchmark-q8-wasm-b8.json",
+      "dtype": "q8",
+      "backend": "wasm",
+      "batch": 8,
+      "modelBytes": 23685172,
+      "modelLoadMs": 1700.460000038147,
+      "coldEmbedMs": 603.8600000143051,
+      "warmEmbedMs": 417.71249997615814,
+      "documentsPerSecond": 76.60771464063554,
+      "writeMs": 1003.3104424999983,
+      "refreshMs": 351.7144374999989,
+      "queryEmbedMs": 11.20250004529953,
+      "dbMs": 6.83784249999735,
+      "e2eMs": 21.77999997138977,
+      "recall": 0.875,
+      "ndcg": 0.8576691957798506,
+      "host": {
+        "platform": "linux",
+        "release": "6.8.0-136-generic",
+        "architecture": "x64",
+        "cpu": "AMD EPYC 7K62 48-Core Processor",
+        "browser": "156.0.8078.4"
+      }
+    },
+    {
+      "file": "benchmark-q8-webgpu-b8.json",
+      "dtype": "q8",
+      "backend": "webgpu",
+      "batch": 8,
+      "modelBytes": 23685172,
+      "modelLoadMs": 3095.25,
+      "coldEmbedMs": 2561.070000052452,
+      "warmEmbedMs": 1722.7224999666214,
+      "documentsPerSecond": 18.57524935131457,
+      "writeMs": 687.9789204999979,
+      "refreshMs": 301.8948340000061,
+      "queryEmbedMs": 222.1075000166893,
+      "dbMs": 8.316498000000138,
+      "e2eMs": 234.8924999833107,
+      "recall": 0.875,
+      "ndcg": 0.8643591300175016,
+      "host": {
+        "platform": "linux",
+        "release": "6.8.0-136-generic",
+        "architecture": "x64",
+        "cpu": "AMD EPYC 7K62 48-Core Processor",
+        "browser": "156.0.8078.4"
+      }
+    }
+  ]
+}

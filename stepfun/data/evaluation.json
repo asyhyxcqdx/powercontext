@@ -1,0 +1,251 @@
+{
+  "description": "Original English corpus: 32 documents, 12 manually labelled queries; illustrative, not an external benchmark.",
+  "documents": [
+    {
+      "id": "recovery-1",
+      "title": "Recovering deleted database records",
+      "text": "Point in time recovery restores a full backup and then replays transaction logs up to the instant before an accidental deletion. Keep backups off the production disk and regularly test restoration."
+    },
+    {
+      "id": "recovery-2",
+      "title": "Testing database backups",
+      "text": "A backup is useful only when it can be restored. Rehearse recovery in an isolated database and check table counts, application reads, and the last committed transaction before switching traffic."
+    },
+    {
+      "id": "index-1",
+      "title": "Choosing database indexes",
+      "text": "An index helps the database locate matching rows without scanning every record. Composite indexes are useful for repeated filters on several columns. Extra indexes consume disk space and make writes more expensive."
+    },
+    {
+      "id": "index-2",
+      "title": "Reading query execution plans",
+      "text": "Use EXPLAIN to inspect whether a query scans a whole table or uses an index. Compare estimated and actual row counts. A predicate on an unindexed column often causes slow queries on large tables."
+    },
+    {
+      "id": "transaction-1",
+      "title": "Atomic database transactions",
+      "text": "A transaction groups multiple writes into one atomic operation. COMMIT publishes all changes; ROLLBACK cancels them. A transfer between bank accounts must debit and credit together so money cannot disappear."
+    },
+    {
+      "id": "transaction-2",
+      "title": "Isolation under concurrent updates",
+      "text": "Concurrent transactions can observe different snapshots depending on isolation level. Locks or optimistic version checks prevent lost updates. Retry serialization failures and keep transaction boundaries short."
+    },
+    {
+      "id": "vector-1",
+      "title": "Semantic nearest neighbor search",
+      "text": "Dense embeddings represent text meaning as numerical vectors. A nearest neighbor index finds similar vectors with cosine or Euclidean distance. Semantic retrieval can match a question even when wording differs from the document."
+    },
+    {
+      "id": "vector-2",
+      "title": "Approximate vector indexes",
+      "text": "HNSW builds a graph for approximate nearest neighbor lookup. Search exploration trades speed for recall. Measure recall against exact neighbors on representative queries before selecting the search parameter."
+    },
+    {
+      "id": "hybrid-1",
+      "title": "Combining keyword and semantic retrieval",
+      "text": "Hybrid search retrieves both lexical matches and semantic neighbors. Exact product codes benefit from full text search while paraphrased questions benefit from embeddings. A database can fuse both rankings in a single retrieval operation."
+    },
+    {
+      "id": "hybrid-2",
+      "title": "Reciprocal rank fusion",
+      "text": "Reciprocal rank fusion combines positions from multiple ranked lists. Each result contributes one divided by a rank constant plus its position. The database returns the fused order; raw vector distances and keyword scores do not need the same scale."
+    },
+    {
+      "id": "quantization-1",
+      "title": "Reducing embedding model size",
+      "text": "Quantization represents model weights with fewer bits. INT8 often reduces a floating point model to about one quarter of its original weight storage. Compare recall and ranking quality before accepting the smaller model."
+    },
+    {
+      "id": "quantization-2",
+      "title": "Half precision model evaluation",
+      "text": "FP16 stores floating point weights with sixteen bits rather than thirty two. Hardware support affects execution speed. Use the same corpus and query labels to compare retrieval quality, memory use and loading time with FP32."
+    },
+    {
+      "id": "browser-1",
+      "title": "WebGPU and browser inference",
+      "text": "WebGPU lets a browser dispatch tensor operations to a local graphics processor. Request a GPU adapter explicitly and check its features. A browser can perform model inference without uploading document text to a cloud inference service."
+    },
+    {
+      "id": "browser-2",
+      "title": "WASM fallback in a browser",
+      "text": "WebAssembly can run local inference when a graphics adapter is unavailable. Show the active backend in the interface, keep the same model contract, and exercise document ingestion and query embedding after automatic fallback."
+    },
+    {
+      "id": "batch-1",
+      "title": "Batching embedding requests",
+      "text": "Batch processing runs several documents through the embedding model at once. Padding and sequence lengths affect efficiency. Compare batch sizes on identical hardware and text, since larger batches can increase memory and sometimes reduce throughput."
+    },
+    {
+      "id": "batch-2",
+      "title": "Cold starts and warm measurements",
+      "text": "The first inference includes shader compilation and memory allocation. Report cold startup separately from repeated warm requests. Preserve all raw measurements and report medians instead of selecting the fastest observation."
+    },
+    {
+      "id": "incremental-1",
+      "title": "Incremental knowledge base imports",
+      "text": "Use deterministic document identifiers to upsert existing content and append new content. Refresh the vector index after a write batch, then verify the new documents can be retrieved. Do not mix embeddings from different models in one collection."
+    },
+    {
+      "id": "incremental-2",
+      "title": "Keeping knowledge bases separate",
+      "text": "Every import and query must use the selected collection. Switching between workspaces must not show results from an earlier workspace. Separate collections for incompatible model versions prevent meaningless vector comparisons."
+    },
+    {
+      "id": "quality-1",
+      "title": "Measuring retrieval recall",
+      "text": "Recall at K is the number of relevant documents among the first K results divided by all relevant documents for the query. A labelled evaluation set makes quality comparisons repeatable. Include queries with several relevant passages."
+    },
+    {
+      "id": "quality-2",
+      "title": "Evaluating ranked search results",
+      "text": "Normalized discounted cumulative gain rewards relevant documents near the top of a ranking. Compare observed discounted gain with the ideal ranking for the same relevance labels. Keep the query set fixed across model configurations."
+    },
+    {
+      "id": "security-1",
+      "title": "Safe handling of application secrets",
+      "text": "Database passwords belong in environment configuration rather than browser JavaScript or a public repository. Bind development servers to loopback by default. Use a protected reverse proxy when exposing an application to other users."
+    },
+    {
+      "id": "security-2",
+      "title": "Parameterizing SQL queries",
+      "text": "Prepared statements bind values separately from SQL syntax. Validate identifiers against a fixed allowlist because table names usually cannot be parameter placeholders. Do not concatenate raw user input into executable SQL."
+    },
+    {
+      "id": "files-1",
+      "title": "Reading CSV files reliably",
+      "text": "CSV fields may contain quoted commas, escaped quotes or newline characters. A correct reader follows the quoting rules rather than splitting every line on commas. Preserve empty fields and detect encoding errors explicitly."
+    },
+    {
+      "id": "files-2",
+      "title": "Streaming large data files",
+      "text": "A streaming parser processes input in bounded chunks instead of loading the entire file into memory. Schema inference should account for later rows with wider types. Report malformed records without silently truncating the dataset."
+    },
+    {
+      "id": "garden",
+      "title": "Watering a vegetable garden",
+      "text": "Tomatoes grow best with consistent soil moisture, sufficient sunlight and support for heavy branches. Water the root zone early in the morning. Mulch reduces evaporation and suppresses weeds."
+    },
+    {
+      "id": "bike",
+      "title": "Bicycle maintenance",
+      "text": "Check tire pressure and brake alignment before a long ride. Clean and lubricate the chain after wet weather. Replace worn brake pads and inspect wheel spokes for damage."
+    },
+    {
+      "id": "bread",
+      "title": "Baking sourdough bread",
+      "text": "Mix flour and water with an active starter. Allow bulk fermentation before shaping the loaf. Steam during the first part of baking helps the crust expand and develop a crisp surface."
+    },
+    {
+      "id": "camera",
+      "title": "Photographing moving subjects",
+      "text": "A fast shutter speed freezes motion while a slower shutter shows movement. Increase light or sensor sensitivity when a short exposure would otherwise be too dark. Continuous autofocus helps track a moving subject."
+    },
+    {
+      "id": "music",
+      "title": "Learning piano scales",
+      "text": "Practice slowly with even timing before increasing tempo. Use consistent fingering and keep the hands relaxed. Short daily sessions help build coordination better than occasional exhausting practice."
+    },
+    {
+      "id": "hiking",
+      "title": "Planning a mountain hike",
+      "text": "Check the weather and trail conditions before departure. Carry water, layers and a map. Tell someone your intended route and expected return time, and turn around early if conditions deteriorate."
+    },
+    {
+      "id": "coffee",
+      "title": "Brewing filter coffee",
+      "text": "Grind coffee just before brewing and use clean hot water. Adjust grind size to control extraction. A consistent ratio of water to coffee makes taste comparisons more useful."
+    },
+    {
+      "id": "astronomy",
+      "title": "Observing the night sky",
+      "text": "Dark locations away from city lights reveal faint stars. Let your eyes adapt before observing. A star chart helps identify constellations and locate bright planets near the ecliptic."
+    }
+  ],
+  "queries": [
+    {
+      "text": "How can I restore records after accidentally deleting a database table?",
+      "relevant": [
+        "recovery-1",
+        "recovery-2"
+      ]
+    },
+    {
+      "text": "How do I avoid reading an entire large table for a filtered query?",
+      "relevant": [
+        "index-1",
+        "index-2"
+      ]
+    },
+    {
+      "text": "How can a bank transfer update two balances together without losing money?",
+      "relevant": [
+        "transaction-1",
+        "transaction-2"
+      ]
+    },
+    {
+      "text": "How can a search engine find related ideas when the words are different?",
+      "relevant": [
+        "vector-1",
+        "vector-2"
+      ]
+    },
+    {
+      "text": "How should exact product identifiers and paraphrased questions be searched together?",
+      "relevant": [
+        "hybrid-1",
+        "hybrid-2"
+      ]
+    },
+    {
+      "text": "How can I shrink a local embedding model and check that search quality stays good?",
+      "relevant": [
+        "quantization-1",
+        "quantization-2"
+      ]
+    },
+    {
+      "text": "How can local browser inference keep working on a machine without GPU support?",
+      "relevant": [
+        "browser-1",
+        "browser-2"
+      ]
+    },
+    {
+      "text": "What is a fair way to compare batch embedding performance without hiding startup costs?",
+      "relevant": [
+        "batch-1",
+        "batch-2"
+      ]
+    },
+    {
+      "text": "How can repeated imports and switching knowledge bases avoid duplicate or stale search results?",
+      "relevant": [
+        "incremental-1",
+        "incremental-2"
+      ]
+    },
+    {
+      "text": "Which metrics evaluate both finding relevant documents and putting them first?",
+      "relevant": [
+        "quality-1",
+        "quality-2"
+      ]
+    },
+    {
+      "text": "How do I prevent credentials from leaking to the browser and malicious SQL input?",
+      "relevant": [
+        "security-1",
+        "security-2"
+      ]
+    },
+    {
+      "text": "How can large comma separated files be parsed without breaking quoted multiline fields?",
+      "relevant": [
+        "files-1",
+        "files-2"
+      ]
+    }
+  ]
+}

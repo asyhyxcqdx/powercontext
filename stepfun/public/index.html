@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>端侧书房 · Edge Library</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><span class="logo">▤</span><div><p class="eyebrow">LOCAL EMBEDDINGS · SEEKDB SEARCH</p><h1>端侧书房</h1></div><span id="backend" class="badge">模型未加载</span></header>
+<main>
+<section class="intro"><h2>资料留在你的书房，理解发生在浏览器。</h2><p>导入文本，浏览器生成向量，seekdb 结合关键词与语义找到原文。无需云端推理 API。</p></section>
+<div class="layout"><aside>
+<section class="panel"><h3>01 / 打开知识库</h3>
+<label for="library">知识库名称</label><input id="library" value="my_library" list="known-libraries" pattern="[a-z][a-z0-9_]{0,39}"><datalist id="known-libraries"></datalist>
+<label for="dtype">模型精度</label><select id="dtype"><option value="q8">INT8 · 约 23 MB</option><option value="fp16">FP16 · 约 45 MB</option><option value="fp32">FP32 · 基线约 90 MB</option></select>
+<label for="device">推理后端</label><select id="device"><option value="auto">自动 · 优先 WebGPU</option><option value="wasm">WASM · 验证降级路径</option><option value="webgpu">仅 WebGPU · 显式检查</option></select>
+<button id="open">打开 / 创建知识库</button><p class="hint">切换精度时使用独立集合，防止不同精度向量混用。模型首次加载可能需要一分钟。</p>
+</section>
+<section class="panel"><h3>02 / 导入资料</h3><label for="files">TXT / Markdown，可多选</label><input id="files" type="file" accept=".txt,.md,text/plain,text/markdown" multiple>
+<label for="batch">向量化批大小</label><select id="batch"><option value="8">8 · 批处理</option><option value="1">1 · 串行基线</option><option value="16">16</option></select>
+<button id="import" disabled>导入所选文件</button><button id="sample" class="secondary" disabled>导入示例知识库</button><p id="count" class="hint">尚未打开集合</p>
+</section></aside>
+<div class="content"><section class="panel search"><h3>03 / 搜索你的资料</h3><form id="search-form"><label class="sr-only" for="query">搜索问题</label><input id="query" placeholder="例如：How can I restore a database after accidental deletion?" maxlength="2000"><button id="search" disabled>混合检索 ↗</button></form><p class="hint">示例语料与模型主要面向英文。可查看原文、来源和分阶段耗时。</p><div id="results" aria-live="polite"><div class="empty">打开知识库并导入资料，然后提出你的问题。</div></div></section>
+<section class="panel"><div class="row"><h3>运行状态</h3><button class="secondary compact" id="export">导出运行记录</button></div><progress id="progress" max="100" value="0"></progress><p id="status" role="status">就绪</p><div id="timings" class="metrics"></div><pre id="log"></pre></section>
+<section class="panel"><h3>复现实验</h3><p class="hint">使用固定语料与人工相关性标注，重复 3 次，记录首次 / 预热后延迟、Recall@5 和 nDCG@5。完整矩阵通过仓库测试脚本运行。</p><button id="benchmark" class="secondary">运行当前配置实验并导出 JSON</button></section>
+</div></div>
+<footer>all-MiniLM-L6-v2 · 384 维 · Apache-2.0 · 文档和向量存入本地 seekdb，模型仅在浏览器执行</footer>
+</main><script type="module" src="/app.js"></script></body></html>

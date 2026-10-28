@@ -1,0 +1,845 @@
+{
+  "createdAt": "2026-10-28T05:36:55.292Z",
+  "model": {
+    "id": "Xenova/all-MiniLM-L6-v2",
+    "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+    "dimension": 384,
+    "license": "Apache-2.0",
+    "files": {
+      "fp32": {
+        "name": "model.onnx",
+        "bytes": 90387606,
+        "sha256": "759c3cd2b7fe7e93933ad23c4c9181b7396442a2ed746ec7c1d46192c469c46e"
+      },
+      "fp16": {
+        "name": "model_fp16.onnx",
+        "bytes": 45297825,
+        "sha256": "2cdb5e58291813b6d6e248ed69010100246821a367fa17b1b81ae9483744533d"
+      },
+      "q8": {
+        "name": "model_quantized.onnx",
+        "bytes": 22972370,
+        "sha256": "afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1"
+      }
+    }
+  },
+  "config": {
+    "dtype": "q8",
+    "backend": "wasm",
+    "batchSize": 8,
+    "repetitions": 3,
+    "library": "eval_1793165807583_2"
+  },
+  "device": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 192,
+    "deviceMemory": 32,
+    "crossOriginIsolated": true
+  },
+  "opened": {
+    "model": {
+      "dtype": "q8",
+      "backend": "wasm",
+      "requestedBackend": "wasm",
+      "fallbackReason": null,
+      "adapterInfo": null,
+      "model": "Xenova/all-MiniLM-L6-v2",
+      "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+      "loadMs": 1700.460000038147,
+      "cachedPipeline": false,
+      "resources": [
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/config.json",
+          "durationMs": 2.3949999809265137,
+          "transferSize": 950,
+          "decodedBodySize": 650
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/tokenizer_config.json",
+          "durationMs": 1.7100000381469727,
+          "transferSize": 666,
+          "decodedBodySize": 366
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx",
+          "durationMs": 145.24000000953674,
+          "transferSize": 22972670,
+          "decodedBodySize": 22972370
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/tokenizer.json",
+          "durationMs": 18.69000005722046,
+          "transferSize": 711961,
+          "decodedBodySize": 711661
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/tokenizer.json",
+          "durationMs": 22.080000042915344,
+          "transferSize": 711961,
+          "decodedBodySize": 711661
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/tokenizer_config.json",
+          "durationMs": 10.375,
+          "transferSize": 666,
+          "decodedBodySize": 366
+        },
+        {
+          "name": "/models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx",
+          "durationMs": 183.02500009536743,
+          "transferSize": 22972670,
+          "decodedBodySize": 22972370
+        }
+      ]
+    },
+    "collection": {
+      "name": "edge_eval_1793165807583_2_q8",
+      "count": 0
+    }
+  },
+  "resources": [],
+  "trials": [
+    {
+      "trial": 0,
+      "phase": "first-inference",
+      "ingestion": {
+        "embedMs": 603.8600000143051,
+        "backend": "wasm",
+        "dtype": "q8",
+        "batchSize": 8,
+        "writeMs": 454.34969699999783,
+        "refreshMs": 402.84655800000473,
+        "count": 32,
+        "documents": 32,
+        "totalMs": 1478.0400000810623
+      },
+      "queries": [
+        {
+          "query": "How can I restore records after accidentally deleting a database table?",
+          "ids": [
+            "recovery-1",
+            "recovery-2",
+            "security-2",
+            "transaction-1",
+            "files-2"
+          ],
+          "relevant": [
+            "recovery-1",
+            "recovery-2"
+          ],
+          "queryEmbedMs": 13.080000042915344,
+          "dbMs": 20.71160399999644,
+          "e2eMs": 39.49000000953674,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How do I avoid reading an entire large table for a filtered query?",
+          "ids": [
+            "index-2",
+            "files-2",
+            "incremental-2",
+            "files-1",
+            "security-2"
+          ],
+          "relevant": [
+            "index-1",
+            "index-2"
+          ],
+          "queryEmbedMs": 12.614999890327454,
+          "dbMs": 9.588168999995105,
+          "e2eMs": 26.360000014305115,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can a bank transfer update two balances together without losing money?",
+          "ids": [
+            "transaction-1",
+            "transaction-2",
+            "incremental-1",
+            "camera",
+            "recovery-2"
+          ],
+          "relevant": [
+            "transaction-1",
+            "transaction-2"
+          ],
+          "queryEmbedMs": 10.72000002861023,
+          "dbMs": 6.759328000000096,
+          "e2eMs": 22.364999890327454,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How can a search engine find related ideas when the words are different?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "vector-1",
+            "quality-2",
+            "incremental-1"
+          ],
+          "relevant": [
+            "vector-1",
+            "vector-2"
+          ],
+          "queryEmbedMs": 10.074999928474426,
+          "dbMs": 7.756861000001663,
+          "e2eMs": 21.99500000476837,
+          "recall": 1,
+          "ndcg": 0.6934264036172708
+        },
+        {
+          "query": "How should exact product identifiers and paraphrased questions be searched together?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "security-2",
+            "incremental-1",
+            "transaction-1"
+          ],
+          "relevant": [
+            "hybrid-1",
+            "hybrid-2"
+          ],
+          "queryEmbedMs": 11.684999942779541,
+          "dbMs": 6.285016000008909,
+          "e2eMs": 21.87999999523163,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can I shrink a local embedding model and check that search quality stays good?",
+          "ids": [
+            "quantization-1",
+            "vector-2",
+            "batch-1",
+            "browser-2",
+            "quality-2"
+          ],
+          "relevant": [
+            "quantization-1",
+            "quantization-2"
+          ],
+          "queryEmbedMs": 13.709999918937683,
+          "dbMs": 6.7428170000057435,
+          "e2eMs": 23.894999980926514,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can local browser inference keep working on a machine without GPU support?",
+          "ids": [
+            "browser-1",
+            "browser-2",
+            "quantization-2",
+            "batch-2",
+            "transaction-2"
+          ],
+          "relevant": [
+            "browser-1",
+            "browser-2"
+          ],
+          "queryEmbedMs": 12.954999923706055,
+          "dbMs": 6.281644999995478,
+          "e2eMs": 29.179999947547913,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "What is a fair way to compare batch embedding performance without hiding startup costs?",
+          "ids": [
+            "batch-1",
+            "quantization-1",
+            "batch-2",
+            "incremental-1",
+            "index-2"
+          ],
+          "relevant": [
+            "batch-1",
+            "batch-2"
+          ],
+          "queryEmbedMs": 14.584999918937683,
+          "dbMs": 6.68509699999413,
+          "e2eMs": 27.209999918937683,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can repeated imports and switching knowledge bases avoid duplicate or stale search results?",
+          "ids": [
+            "incremental-2",
+            "incremental-1",
+            "quality-2",
+            "hybrid-1",
+            "vector-2"
+          ],
+          "relevant": [
+            "incremental-1",
+            "incremental-2"
+          ],
+          "queryEmbedMs": 12.520000100135803,
+          "dbMs": 6.44552599999588,
+          "e2eMs": 22.240000009536743,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "Which metrics evaluate both finding relevant documents and putting them first?",
+          "ids": [
+            "quality-1",
+            "hybrid-1",
+            "quality-2",
+            "batch-1",
+            "incremental-1"
+          ],
+          "relevant": [
+            "quality-1",
+            "quality-2"
+          ],
+          "queryEmbedMs": 11.664999961853027,
+          "dbMs": 6.454726000010851,
+          "e2eMs": 21.22000002861023,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How do I prevent credentials from leaking to the browser and malicious SQL input?",
+          "ids": [
+            "security-2",
+            "browser-1",
+            "security-1",
+            "browser-2",
+            "files-2"
+          ],
+          "relevant": [
+            "security-1",
+            "security-2"
+          ],
+          "queryEmbedMs": 16.235000014305115,
+          "dbMs": 6.526356000002124,
+          "e2eMs": 26.68500006198883,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can large comma separated files be parsed without breaking quoted multiline fields?",
+          "ids": [
+            "files-1",
+            "files-2",
+            "index-2",
+            "batch-1",
+            "security-2"
+          ],
+          "relevant": [
+            "files-1",
+            "files-2"
+          ],
+          "queryEmbedMs": 9.350000023841858,
+          "dbMs": 6.576805999997305,
+          "e2eMs": 19.010000109672546,
+          "recall": 1,
+          "ndcg": 1
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "phase": "warm",
+      "ingestion": {
+        "embedMs": 410.20499992370605,
+        "backend": "wasm",
+        "dtype": "q8",
+        "batchSize": 8,
+        "writeMs": 1824.6546490000037,
+        "refreshMs": 401.978906999997,
+        "count": 32,
+        "documents": 32,
+        "totalMs": 2657.0250000953674
+      },
+      "queries": [
+        {
+          "query": "How can I restore records after accidentally deleting a database table?",
+          "ids": [
+            "recovery-1",
+            "recovery-2",
+            "security-2",
+            "transaction-1",
+            "files-2"
+          ],
+          "relevant": [
+            "recovery-1",
+            "recovery-2"
+          ],
+          "queryEmbedMs": 13.47000002861023,
+          "dbMs": 9.639578999995138,
+          "e2eMs": 29.399999976158142,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How do I avoid reading an entire large table for a filtered query?",
+          "ids": [
+            "index-2",
+            "files-2",
+            "incremental-2",
+            "files-1",
+            "security-2"
+          ],
+          "relevant": [
+            "index-1",
+            "index-2"
+          ],
+          "queryEmbedMs": 11.230000019073486,
+          "dbMs": 8.635825000004843,
+          "e2eMs": 24.480000019073486,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can a bank transfer update two balances together without losing money?",
+          "ids": [
+            "transaction-1",
+            "transaction-2",
+            "incremental-1",
+            "camera",
+            "recovery-2"
+          ],
+          "relevant": [
+            "transaction-1",
+            "transaction-2"
+          ],
+          "queryEmbedMs": 10.330000042915344,
+          "dbMs": 7.697520999994595,
+          "e2eMs": 22.264999985694885,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How can a search engine find related ideas when the words are different?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "vector-1",
+            "quality-2",
+            "incremental-1"
+          ],
+          "relevant": [
+            "vector-1",
+            "vector-2"
+          ],
+          "queryEmbedMs": 10.139999985694885,
+          "dbMs": 6.702207000009366,
+          "e2eMs": 20.769999980926514,
+          "recall": 1,
+          "ndcg": 0.6934264036172708
+        },
+        {
+          "query": "How should exact product identifiers and paraphrased questions be searched together?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "security-2",
+            "incremental-1",
+            "transaction-1"
+          ],
+          "relevant": [
+            "hybrid-1",
+            "hybrid-2"
+          ],
+          "queryEmbedMs": 11.884999990463257,
+          "dbMs": 6.6958880000020145,
+          "e2eMs": 22.110000014305115,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can I shrink a local embedding model and check that search quality stays good?",
+          "ids": [
+            "quantization-1",
+            "vector-2",
+            "batch-1",
+            "browser-2",
+            "quality-2"
+          ],
+          "relevant": [
+            "quantization-1",
+            "quantization-2"
+          ],
+          "queryEmbedMs": 11.425000071525574,
+          "dbMs": 7.1190889999998035,
+          "e2eMs": 21.87000000476837,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can local browser inference keep working on a machine without GPU support?",
+          "ids": [
+            "browser-1",
+            "browser-2",
+            "quantization-2",
+            "batch-2",
+            "transaction-2"
+          ],
+          "relevant": [
+            "browser-1",
+            "browser-2"
+          ],
+          "queryEmbedMs": 10.329999923706055,
+          "dbMs": 6.939518999992288,
+          "e2eMs": 20.75499999523163,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "What is a fair way to compare batch embedding performance without hiding startup costs?",
+          "ids": [
+            "batch-1",
+            "quantization-1",
+            "batch-2",
+            "incremental-1",
+            "index-2"
+          ],
+          "relevant": [
+            "batch-1",
+            "batch-2"
+          ],
+          "queryEmbedMs": 11.81000006198883,
+          "dbMs": 6.532425999990664,
+          "e2eMs": 21.87999999523163,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can repeated imports and switching knowledge bases avoid duplicate or stale search results?",
+          "ids": [
+            "incremental-2",
+            "incremental-1",
+            "quality-2",
+            "hybrid-1",
+            "vector-2"
+          ],
+          "relevant": [
+            "incremental-1",
+            "incremental-2"
+          ],
+          "queryEmbedMs": 10.465000033378601,
+          "dbMs": 6.408496000003652,
+          "e2eMs": 20.235000014305115,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "Which metrics evaluate both finding relevant documents and putting them first?",
+          "ids": [
+            "quality-1",
+            "hybrid-1",
+            "quality-2",
+            "batch-1",
+            "incremental-1"
+          ],
+          "relevant": [
+            "quality-1",
+            "quality-2"
+          ],
+          "queryEmbedMs": 10.81000006198883,
+          "dbMs": 6.570317000005161,
+          "e2eMs": 20.675000071525574,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How do I prevent credentials from leaking to the browser and malicious SQL input?",
+          "ids": [
+            "security-2",
+            "browser-1",
+            "security-1",
+            "browser-2",
+            "files-2"
+          ],
+          "relevant": [
+            "security-1",
+            "security-2"
+          ],
+          "queryEmbedMs": 11.445000052452087,
+          "dbMs": 6.267235000006622,
+          "e2eMs": 21.335000038146973,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can large comma separated files be parsed without breaking quoted multiline fields?",
+          "ids": [
+            "files-1",
+            "files-2",
+            "index-2",
+            "batch-1",
+            "security-2"
+          ],
+          "relevant": [
+            "files-1",
+            "files-2"
+          ],
+          "queryEmbedMs": 11.049999952316284,
+          "dbMs": 6.183864999999059,
+          "e2eMs": 20.445000052452087,
+          "recall": 1,
+          "ndcg": 1
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "phase": "warm",
+      "ingestion": {
+        "embedMs": 425.22000002861023,
+        "backend": "wasm",
+        "dtype": "q8",
+        "batchSize": 8,
+        "writeMs": 181.96623599999293,
+        "refreshMs": 301.4499680000008,
+        "count": 32,
+        "documents": 32,
+        "totalMs": 927.9049999713898
+      },
+      "queries": [
+        {
+          "query": "How can I restore records after accidentally deleting a database table?",
+          "ids": [
+            "recovery-1",
+            "recovery-2",
+            "security-2",
+            "transaction-1",
+            "files-2"
+          ],
+          "relevant": [
+            "recovery-1",
+            "recovery-2"
+          ],
+          "queryEmbedMs": 12.93500006198883,
+          "dbMs": 6.838936999993166,
+          "e2eMs": 23.240000009536743,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How do I avoid reading an entire large table for a filtered query?",
+          "ids": [
+            "index-2",
+            "files-2",
+            "incremental-2",
+            "files-1",
+            "security-2"
+          ],
+          "relevant": [
+            "index-1",
+            "index-2"
+          ],
+          "queryEmbedMs": 11.650000095367432,
+          "dbMs": 6.836748000001535,
+          "e2eMs": 21.899999976158142,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can a bank transfer update two balances together without losing money?",
+          "ids": [
+            "transaction-1",
+            "transaction-2",
+            "incremental-1",
+            "camera",
+            "recovery-2"
+          ],
+          "relevant": [
+            "transaction-1",
+            "transaction-2"
+          ],
+          "queryEmbedMs": 10.884999990463257,
+          "dbMs": 4.7946290000109,
+          "e2eMs": 19.774999976158142,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "How can a search engine find related ideas when the words are different?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "vector-1",
+            "quality-2",
+            "incremental-1"
+          ],
+          "relevant": [
+            "vector-1",
+            "vector-2"
+          ],
+          "queryEmbedMs": 9.980000019073486,
+          "dbMs": 5.903214000005391,
+          "e2eMs": 18.96499991416931,
+          "recall": 1,
+          "ndcg": 0.6934264036172708
+        },
+        {
+          "query": "How should exact product identifiers and paraphrased questions be searched together?",
+          "ids": [
+            "hybrid-1",
+            "vector-2",
+            "security-2",
+            "incremental-1",
+            "transaction-1"
+          ],
+          "relevant": [
+            "hybrid-1",
+            "hybrid-2"
+          ],
+          "queryEmbedMs": 11.175000071525574,
+          "dbMs": 6.211146000001463,
+          "e2eMs": 20.4099999666214,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can I shrink a local embedding model and check that search quality stays good?",
+          "ids": [
+            "quantization-1",
+            "vector-2",
+            "batch-1",
+            "browser-2",
+            "quality-2"
+          ],
+          "relevant": [
+            "quantization-1",
+            "quantization-2"
+          ],
+          "queryEmbedMs": 11.289999961853027,
+          "dbMs": 6.825177999999141,
+          "e2eMs": 21.37999999523163,
+          "recall": 0.5,
+          "ndcg": 0.6131471927654584
+        },
+        {
+          "query": "How can local browser inference keep working on a machine without GPU support?",
+          "ids": [
+            "browser-1",
+            "browser-2",
+            "quantization-2",
+            "batch-2",
+            "transaction-2"
+          ],
+          "relevant": [
+            "browser-1",
+            "browser-2"
+          ],
+          "queryEmbedMs": 10.785000085830688,
+          "dbMs": 7.55893999998807,
+          "e2eMs": 21.59499990940094,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "What is a fair way to compare batch embedding performance without hiding startup costs?",
+          "ids": [
+            "batch-1",
+            "quantization-1",
+            "batch-2",
+            "incremental-1",
+            "index-2"
+          ],
+          "relevant": [
+            "batch-1",
+            "batch-2"
+          ],
+          "queryEmbedMs": 11.605000019073486,
+          "dbMs": 7.757360999996308,
+          "e2eMs": 23.31499993801117,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can repeated imports and switching knowledge bases avoid duplicate or stale search results?",
+          "ids": [
+            "incremental-2",
+            "incremental-1",
+            "quality-2",
+            "hybrid-1",
+            "vector-2"
+          ],
+          "relevant": [
+            "incremental-1",
+            "incremental-2"
+          ],
+          "queryEmbedMs": 10.634999990463257,
+          "dbMs": 7.620410999996238,
+          "e2eMs": 21.68999993801117,
+          "recall": 1,
+          "ndcg": 1
+        },
+        {
+          "query": "Which metrics evaluate both finding relevant documents and putting them first?",
+          "ids": [
+            "quality-1",
+            "hybrid-1",
+            "quality-2",
+            "batch-1",
+            "incremental-1"
+          ],
+          "relevant": [
+            "quality-1",
+            "quality-2"
+          ],
+          "queryEmbedMs": 9.790000081062317,
+          "dbMs": 9.121826999995392,
+          "e2eMs": 22.459999918937683,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How do I prevent credentials from leaking to the browser and malicious SQL input?",
+          "ids": [
+            "security-2",
+            "browser-1",
+            "security-1",
+            "browser-2",
+            "files-2"
+          ],
+          "relevant": [
+            "security-1",
+            "security-2"
+          ],
+          "queryEmbedMs": 13.704999923706055,
+          "dbMs": 7.099268000005395,
+          "e2eMs": 24.329999923706055,
+          "recall": 1,
+          "ndcg": 0.9197207891481876
+        },
+        {
+          "query": "How can large comma separated files be parsed without breaking quoted multiline fields?",
+          "ids": [
+            "files-1",
+            "files-2",
+            "index-2",
+            "batch-1",
+            "security-2"
+          ],
+          "relevant": [
+            "files-1",
+            "files-2"
+          ],
+          "queryEmbedMs": 13.519999980926514,
+          "dbMs": 7.718401000005542,
+          "e2eMs": 24.84500002861023,
+          "recall": 1,
+          "ndcg": 1
+        }
+      ]
+    }
+  ],
+  "host": {
+    "platform": "linux",
+    "release": "6.8.0-136-generic",
+    "architecture": "x64",
+    "cpu": "AMD EPYC 7K62 48-Core Processor",
+    "browser": "156.0.8078.4"
+  }
+}
