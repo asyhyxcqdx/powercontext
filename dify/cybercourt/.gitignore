@@ -1,0 +1,7 @@
+# NEVER commit local database credentials or private outputs
+.env
+.env.*
+!.env.example
+*.local
+*.log
+secrets/

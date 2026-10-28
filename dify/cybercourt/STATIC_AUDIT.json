@@ -1,0 +1,46 @@
+{
+  "title": "Cyber Court Dify x seekdb competition package static audit",
+  "audit_time_utc": "2026-10-27T17:08:25.834921+00:00",
+  "source": "user-uploaded Dify DSL, integrated with prepared original sample dataset/scripts",
+  "dsl_app_name": "赛博离谱法庭",
+  "dsl_schema_version": "0.7.0",
+  "node_count": 5,
+  "edge_count": 4,
+  "node_order": [
+    "start",
+    "code",
+    "http-request",
+    "llm",
+    "answer"
+  ],
+  "model": "gpt-5",
+  "marketplace_dependency": "langgenius/openai:1.0.8@5676d8eb5d7df5784610e656f49f5fbdc48b81d106a17d8946d9966c1fe73f1b",
+  "environment_variable_names": [
+    "D0_INSTANCE_ID",
+    "D0_PASSWORD"
+  ],
+  "secret_values_embedded": false,
+  "stored_cases": 36,
+  "categories": {
+    "study": 6,
+    "work": 6,
+    "digital": 6,
+    "pet": 6,
+    "social": 6,
+    "life": 6
+  },
+  "reproducibility_status": "STATIC_VERIFIED; Dify re-import and fresh live D0 connectivity not executed here",
+  "changes_to_export": [
+    "scrub D0_INSTANCE_ID value",
+    "remove unused COURT_TOKEN environment variable"
+  ],
+  "static_checks_passed": [
+    "parse YAML",
+    "5 nodes 4 edges",
+    "code SQL whitelist",
+    "verify prompt binding",
+    "verify env no value",
+    "36 unique cases",
+    "code functional parity on seven sample prompts"
+  ]
+}
