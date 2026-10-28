@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "before_feature_exit": 1,
+  "before_regression_exit": 0,
+  "after_feature_exit": 0,
+  "after_regression_exit": 0,
+  "restored_original_sha256": "49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8",
+  "log_dir": "evidence/runs/20261028T104552520917Z_1064102_offline_replay"
+}

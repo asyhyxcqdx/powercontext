@@ -1,0 +1,11 @@
+.env
+.env.*.local
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+.powercontext-venv/
+runtime/
+*.db/
+*.db
+# Keep evidence/trace files that the real demo generates and commits.

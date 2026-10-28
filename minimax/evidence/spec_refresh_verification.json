@@ -1,0 +1,9 @@
+{
+  "result": "PASS",
+  "marker": "SPEC_REFRESH_PROBE_2026_REQUIREMENT_CHANGED",
+  "old_spec_sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a",
+  "updated_spec_sha256": "290965f67dd567680d4abfc6ca067b610c3d7245d0f525d112e270b9bb107ed6",
+  "query_returned_updated_content": true,
+  "time": "2026-10-28T10:45:49.063054Z",
+  "original_spec_restored_sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a"
+}

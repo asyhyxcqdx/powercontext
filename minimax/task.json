@@ -1,0 +1,15 @@
+{
+  "task_id": "inventory-min-stock-2026",
+  "title": "Add an inclusive minimum-stock filter without breaking existing catalog search",
+  "query": "Implement min_stock for filter_products inventory stock threshold inclusive and preserve category sorting case-insensitive behavior",
+  "keywords": ["min_stock", "filter_products", "inventory", "stock", "category"],
+  "required_sources": {
+    "spec": ["specs/inventory_filter.md"],
+    "code": ["workshop/inventory.py"],
+    "test": ["tests/test_feature_min_stock.py", "tests/test_regression.py"]
+  },
+  "target_file": "workshop/inventory.py",
+  "baseline_file": "snapshots/before/inventory.py",
+  "feature_tests": "tests/test_feature_min_stock.py",
+  "regression_tests": "tests/test_regression.py"
+}

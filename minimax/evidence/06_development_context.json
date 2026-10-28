@@ -1,0 +1,113 @@
+{
+  "task": {
+    "task_id": "inventory-min-stock-2026",
+    "title": "Add an inclusive minimum-stock filter without breaking existing catalog search",
+    "query": "Implement min_stock for filter_products inventory stock threshold inclusive and preserve category sorting case-insensitive behavior",
+    "keywords": [
+      "min_stock",
+      "filter_products",
+      "inventory",
+      "stock",
+      "category"
+    ],
+    "required_sources": {
+      "spec": [
+        "specs/inventory_filter.md"
+      ],
+      "code": [
+        "workshop/inventory.py"
+      ],
+      "test": [
+        "tests/test_feature_min_stock.py",
+        "tests/test_regression.py"
+      ]
+    },
+    "target_file": "workshop/inventory.py",
+    "baseline_file": "snapshots/before/inventory.py",
+    "feature_tests": "tests/test_feature_min_stock.py",
+    "regression_tests": "tests/test_regression.py"
+  },
+  "source_provenance": [
+    {
+      "path": "specs/inventory_filter.md",
+      "kind": "spec",
+      "symbol": "filter_products",
+      "sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a",
+      "content": "# Inventory filtering specification\n\nVersion: 1.0\nTask: inventory-min-stock-2026\nSymbol: filter_products\n\n## Applicable requirement: SDD-STOCK-001 (NEW)\n\nThe function `filter_products(products, category=None, min_stock=None)` must support an optional\n`min_stock` argument. If provided, retain only products whose integer `stock` is greater than\nor equal to `min_stock` (inclusive). A threshold of zero is a meaningful supplied value.\nIf `min_stock` is `None`, do not apply a stock restriction.\nNo new arguments or return-format changes are allowed.\n\n## Preservation requirement: SDD-COMPAT-002\n\nKeep the existing optional `category` filter case-insensitive. If both filters are given,\napply both conditions (logical AND). Preserve input order; do not mutate input products,\nproduct dictionaries, or the return type. Unknown categories return an empty list.\nWithout filters, return a new list with all products in their original order.\n\n## Scope and verification\n\nChange only `workshop/inventory.py` in the sample business project. Target tests are\n`tests/test_feature_min_stock.py`; compatibility tests are `tests/test_regression.py`.\nThe very same tests must run against the before and after code.\n"
+    },
+    {
+      "path": "tests/test_feature_min_stock.py",
+      "kind": "test",
+      "symbol": "filter_products",
+      "sha256": "5cb999e4162c1e206847b8e458a9f3d59c2ad7faf0abe02e663a1016942a0fe1",
+      "content": "\"\"\"The unchanged target tests must FAIL for the baseline business defect.\"\"\"\n\nfrom workshop.inventory import filter_products\n\n\nPRODUCTS = [\n    {\"sku\": \"A1\", \"category\": \"Tools\", \"stock\": 0},\n    {\"sku\": \"B2\", \"category\": \"Books\", \"stock\": 2},\n    {\"sku\": \"C3\", \"category\": \"Tools\", \"stock\": 5},\n    {\"sku\": \"D4\", \"category\": \"Tools\", \"stock\": 2},\n]\n\n\ndef ids(rows):\n    return [row[\"sku\"] for row in rows]\n\n\ndef test_min_stock_inclusive_boundary():\n    assert ids(filter_products(PRODUCTS, min_stock=2)) == [\"B2\", \"C3\", \"D4\"]\n\n\ndef test_min_stock_zero_is_a_real_threshold():\n    # Negative stock represents outstanding backorders; zero is NOT equivalent to None.\n    backorders = [\n        {\"sku\": \"N\", \"category\": \"Tools\", \"stock\": -1},\n        {\"sku\": \"Z\", \"category\": \"Tools\", \"stock\": 0},\n    ]\n    assert ids(filter_products(backorders, min_stock=0)) == [\"Z\"]\n\n\ndef test_category_combines_with_stock_threshold():\n    assert ids(filter_products(PRODUCTS, category=\"TOOLS\", min_stock=2)) == [\"C3\", \"D4\"]\n\n\ndef test_stock_threshold_larger_than_every_item():\n    assert filter_products(PRODUCTS, min_stock=99) == []\n\n"
+    },
+    {
+      "path": "tests/test_regression.py",
+      "kind": "test",
+      "symbol": "filter_products",
+      "sha256": "50011fecca9535611b3b9f55e7fcd8c792ce5799336b6978fb3efddf18d2d5d3",
+      "content": "\"\"\"Existing behavior that MiniMax is required to preserve.\"\"\"\n\nfrom workshop.inventory import filter_products\n\n\nPRODUCTS = [\n    {\"sku\": \"A\", \"category\": \"Tools\", \"stock\": 1},\n    {\"sku\": \"B\", \"category\": \"Books\", \"stock\": 0},\n    {\"sku\": \"C\", \"category\": \"Tools\", \"stock\": 3},\n]\n\n\ndef ids(rows):\n    return [row[\"sku\"] for row in rows]\n\n\ndef test_no_filter_keeps_all_in_order():\n    assert ids(filter_products(PRODUCTS)) == [\"A\", \"B\", \"C\"]\n\n\ndef test_category_match_is_case_insensitive():\n    assert ids(filter_products(PRODUCTS, category=\"tOoLs\")) == [\"A\", \"C\"]\n\n\ndef test_unknown_category_is_empty():\n    assert filter_products(PRODUCTS, category=\"Unknown\") == []\n\n\ndef test_return_value_is_new_list():\n    assert filter_products(PRODUCTS) is not PRODUCTS\n\n\ndef test_inputs_not_mutated():\n    before = [dict(row) for row in PRODUCTS]\n    filter_products(PRODUCTS, category=\"Tools\")\n    assert PRODUCTS == before\n\n\ndef test_new_filter_must_still_not_mutate_inputs():\n    before = [dict(row) for row in PRODUCTS]\n    result = filter_products(PRODUCTS, min_stock=2)\n    assert PRODUCTS == before\n    assert result is not PRODUCTS\n"
+    },
+    {
+      "path": "workshop/inventory.py",
+      "kind": "code",
+      "symbol": "filter_products",
+      "sha256": "b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf",
+      "content": "\"\"\"Inventory search for a small retail service.\"\"\"\n\nfrom __future__ import annotations\n\n\ndef filter_products(products: list[dict], category: str | None = None,\n                    min_stock: int | None = None) -> list[dict]:\n    \"\"\"Return the matching products in input order without mutating inputs.\n\n    `min_stock` is an accepted but not yet implemented business requirement.\n    \"\"\"\n    result = []\n    for product in products:\n        if category is not None and product[\"category\"].lower() != category.lower():\n            continue\n        result.append(product)\n    return result\n"
+    }
+  ],
+  "sql_retrieval": {
+    "time": "2026-10-28T10:45:29.913219Z",
+    "task_query": "Implement min_stock for filter_products inventory stock threshold inclusive and preserve category sorting case-insensitive behavior",
+    "sql": "SELECT source_path, kind, symbol, content, sha256, indexed_at FROM sdd_documents WHERE task_id = %s AND ((LOWER(content) LIKE %s OR LOWER(source_path) LIKE %s) OR (LOWER(content) LIKE %s OR LOWER(source_path) LIKE %s) OR (LOWER(content) LIKE %s OR LOWER(source_path) LIKE %s) OR (LOWER(content) LIKE %s OR LOWER(source_path) LIKE %s) OR (LOWER(content) LIKE %s OR LOWER(source_path) LIKE %s)) ORDER BY source_path",
+    "parameters": [
+      "inventory-min-stock-2026",
+      "%min_stock%",
+      "%min_stock%",
+      "%filter_products%",
+      "%filter_products%",
+      "%inventory%",
+      "%inventory%",
+      "%stock%",
+      "%stock%",
+      "%category%",
+      "%category%"
+    ],
+    "returned_rows": [
+      {
+        "source_path": "specs/inventory_filter.md",
+        "kind": "spec",
+        "sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a"
+      },
+      {
+        "source_path": "tests/test_feature_min_stock.py",
+        "kind": "test",
+        "sha256": "5cb999e4162c1e206847b8e458a9f3d59c2ad7faf0abe02e663a1016942a0fe1"
+      },
+      {
+        "source_path": "tests/test_regression.py",
+        "kind": "test",
+        "sha256": "50011fecca9535611b3b9f55e7fcd8c792ce5799336b6978fb3efddf18d2d5d3"
+      },
+      {
+        "source_path": "workshop/inventory.py",
+        "kind": "code",
+        "sha256": "b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf"
+      }
+    ]
+  },
+  "powercontext_state": {
+    "latest": "SDD_TASK_STATE task=inventory-min-stock-2026 | stage=baseline_failed | next=implement_min_stock_with_MiniMax | sha256=b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf | utc=2026-10-28T10:45:28.156639Z",
+    "records": [
+      "SDD_TASK_STATE task=inventory-min-stock-2026 | stage=baseline_failed | next=implement_min_stock_with_MiniMax | sha256=b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf | utc=2026-10-28T10:45:28.156639Z"
+    ],
+    "prepared": {
+      "schema": "powercontext.prepared-context.v1",
+      "status": "empty",
+      "content": null,
+      "content_bytes": 0
+    }
+  },
+  "built_at": "2026-10-28T10:45:29.955568Z"
+}

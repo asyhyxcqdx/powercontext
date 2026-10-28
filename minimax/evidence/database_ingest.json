@@ -1,0 +1,60 @@
+{
+  "database": "OceanBase/seekdb SQL (embedded if OB_HOST unset)",
+  "ingested": 4,
+  "rows_returned": [
+    {
+      "source_path": "specs/inventory_filter.md",
+      "kind": "spec",
+      "sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a"
+    },
+    {
+      "source_path": "tests/test_feature_min_stock.py",
+      "kind": "test",
+      "sha256": "5cb999e4162c1e206847b8e458a9f3d59c2ad7faf0abe02e663a1016942a0fe1"
+    },
+    {
+      "source_path": "tests/test_regression.py",
+      "kind": "test",
+      "sha256": "50011fecca9535611b3b9f55e7fcd8c792ce5799336b6978fb3efddf18d2d5d3"
+    },
+    {
+      "source_path": "workshop/inventory.py",
+      "kind": "code",
+      "sha256": "49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8"
+    }
+  ],
+  "queries": [
+    {
+      "sql": "DELETE FROM sdd_documents WHERE task_id = %s",
+      "parameters": [
+        "inventory-min-stock-2026"
+      ],
+      "affected": 4
+    },
+    {
+      "sql": "INSERT INTO sdd_documents (...) VALUES (%s,...)",
+      "source_path": "specs/inventory_filter.md",
+      "sha256": "62119f4cccf1ad9a69f0b5f4a27db6bf25313eba2e6d58277d057111af38661a",
+      "affected": 1
+    },
+    {
+      "sql": "INSERT INTO sdd_documents (...) VALUES (%s,...)",
+      "source_path": "workshop/inventory.py",
+      "sha256": "49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8",
+      "affected": 1
+    },
+    {
+      "sql": "INSERT INTO sdd_documents (...) VALUES (%s,...)",
+      "source_path": "tests/test_feature_min_stock.py",
+      "sha256": "5cb999e4162c1e206847b8e458a9f3d59c2ad7faf0abe02e663a1016942a0fe1",
+      "affected": 1
+    },
+    {
+      "sql": "INSERT INTO sdd_documents (...) VALUES (%s,...)",
+      "source_path": "tests/test_regression.py",
+      "sha256": "50011fecca9535611b3b9f55e7fcd8c792ce5799336b6978fb3efddf18d2d5d3",
+      "affected": 1
+    }
+  ],
+  "time": "2026-10-28T10:45:50.765926Z"
+}

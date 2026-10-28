@@ -1,0 +1,17 @@
+{
+  "time": "2026-10-28T10:45:53.314210Z",
+  "required_evidence": {
+    "database_ingest.json": true,
+    "database_last_query.json": true,
+    "state_last_write.json": true,
+    "state_last_read.json": true,
+    "context_latest.json": true,
+    "model_last_success.json": true,
+    "spec_refresh_verification.json": true
+  },
+  "status": "READY_FOR_REVIEW",
+  "after_snapshot_present": true,
+  "working_source_matches_after_snapshot": true,
+  "after_snapshot_sha256": "49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8",
+  "all_required_sources_present": true
+}

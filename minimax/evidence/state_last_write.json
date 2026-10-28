@@ -1,0 +1,19 @@
+{
+  "time": "2026-10-28T10:45:39.274209Z",
+  "scope_id": "scp_39stnj1txkr20zphvpnpgd85sn",
+  "request_text": "SDD_TASK_STATE task=inventory-min-stock-2026 | stage=validated | next=review_and_submit | sha256=49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8 | utc=2026-10-28T10:45:39.252007Z",
+  "confirmed_records": [
+    {
+      "artifact": {
+        "family": "atomic-memory",
+        "artifact_id": "art_bd36cb541df24409b9e61cf04fe0638b",
+        "revision": 1
+      },
+      "kind": "decision",
+      "text": "SDD_TASK_STATE task=inventory-min-stock-2026 | stage=validated | next=review_and_submit | sha256=49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8 | utc=2026-10-28T10:45:39.252007Z",
+      "state": "active",
+      "state_version": 0,
+      "merged_into_id": null
+    }
+  ]
+}

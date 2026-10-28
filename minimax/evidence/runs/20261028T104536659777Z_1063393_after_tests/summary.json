@@ -1,0 +1,9 @@
+{
+  "stage": "after",
+  "acceptance": "PASS",
+  "feature_exit_code": 0,
+  "regression_exit_code": 0,
+  "feature_behavior_failure": false,
+  "code_sha256": "49fa324b58f6f8fabd7da3e09485dd6bd6cefe51feac0033ab5b1d875c4729e8",
+  "log_dir": "evidence/runs/20261028T104536659777Z_1063393_after_tests"
+}

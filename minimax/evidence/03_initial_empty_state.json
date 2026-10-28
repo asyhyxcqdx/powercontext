@@ -1,0 +1,14 @@
+{
+  "scope_id": "scp_39stnj1txkr20zphvpnpgd85sn",
+  "time": "2026-10-28T10:45:27.636151Z",
+  "records": [],
+  "latest": null,
+  "list_response": {
+    "items": [],
+    "next_cursor": null
+  },
+  "search_response": {
+    "mode": "text",
+    "hits": []
+  }
+}

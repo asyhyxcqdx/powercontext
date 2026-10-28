@@ -1,0 +1,9 @@
+{
+  "stage": "before",
+  "acceptance": "PASS",
+  "feature_exit_code": 1,
+  "regression_exit_code": 0,
+  "feature_behavior_failure": true,
+  "code_sha256": "b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf",
+  "log_dir": "evidence/runs/20261028T104527717998Z_1063296_before_tests"
+}

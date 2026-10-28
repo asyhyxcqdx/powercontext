@@ -1,0 +1,11 @@
+{
+  "command": "/root/minimax/.venv/bin/python -m pytest -q tests/test_regression.py",
+  "cwd": ".",
+  "exit_code": 0,
+  "stdout": "......                                                                   [100%]\n6 passed in 0.01s\n",
+  "stderr": "",
+  "code_version": "replay-before",
+  "code_sha256": "b073f27dc7e4db04609d7be6b60be61e710e819bf84ecc105bcf9f9e873824bf",
+  "time_utc": "2026-10-28T10:45:52.896043Z",
+  "test_source_sha256": "50011fecca9535611b3b9f55e7fcd8c792ce5799336b6978fb3efddf18d2d5d3"
+}
