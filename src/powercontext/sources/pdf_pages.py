@@ -175,7 +175,25 @@ async def _retrieve_candidates(memory: ScopedMemoryApplication, query: PDFSearch
 
     candidates = {}
     for probe in query.probes:
-        page = await memory.search(SearchMemoryRequest(query=probe, mode="fts", limit=max(256, limit * 12)))
-        for hit in page.hits:
-            candidates.setdefault((hit.entry_id, hit.entry_version_id), hit)
+        probe_limit = max(256, limit * 12)
+        maximum = max(probe_limit, 4096)
+        while True:
+            page = await memory.search(SearchMemoryRequest(query=probe, mode="fts", limit=probe_limit))
+            for hit in page.hits:
+                candidates.setdefault(
+                    (
+                        hit.memory_ref.family,
+                        hit.memory_ref.artifact_id,
+                        hit.memory_ref.revision,
+                        hit.entry_id,
+                        hit.entry_version_id,
+                    ),
+                    hit,
+                )
+            # A saturated coarse ranking may omit long numeric statements.
+            # Expand through the public scoped API before applying page ranking,
+            # with a finite per-probe ceiling for larger collections.
+            if len(page.hits) < probe_limit or probe_limit >= maximum:
+                break
+            probe_limit = min(probe_limit * 2, maximum)
     return list(candidates.values())

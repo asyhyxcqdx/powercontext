@@ -31,6 +31,8 @@ from pypdf.generic import (
     StreamObject,
 )
 
+from powercontext.sources._pdf_actual_text import restore_actual_text
+
 if TYPE_CHECKING:
     from pypdf import PageObject, PdfReader
 
@@ -155,5 +157,5 @@ def _normalized_content(
             prepared_forms.add(name)
     if in_text_object:
         raise ValueError("Unterminated PDF text object")  # noqa: TRY003
-    stream.operations = operations
+    stream.operations = restore_actual_text(operations, resources)
     return stream

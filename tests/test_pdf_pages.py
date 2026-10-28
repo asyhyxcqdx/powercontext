@@ -251,3 +251,46 @@ def test_text_object_can_span_page_content_streams():
     pages = parse_pdf_document(PDFDocumentInput(document_id="split-stream", content=buffer.getvalue()))
     assert "Revenue 1234" in pages[0].text
     assert len(pages) == 2 and pages[1].text == ""
+
+
+@pytest.mark.parametrize("named_property", [False, True])
+@pytest.mark.parametrize("form", [False, True])
+def test_actual_text_restores_ligatures_without_changing_shared_fonts(named_property, form):
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_positioned_text_document(form=False))))
+    first = writer.pages[0]
+    second = writer.pages[1]
+    second[NameObject("/Resources")] = first["/Resources"]
+    prefix = b"/Span << /ActualText <FEFF00740069> >> BDC "
+    if named_property:
+        from pypdf.generic import TextStringObject
+
+        first["/Resources"][NameObject("/Properties")] = writer._add_object(
+            DictionaryObject({NameObject("/P1"): DictionaryObject({NameObject("/ActualText"): TextStringObject("ti")})})
+        )
+        prefix = b"/Span /P1 BDC "
+    stream = DecodedStreamObject()
+    stream.set_data(b"BT /F1 10 Tf 30 700 Td (Sec) Tj " + prefix + b"(X) Tj EMC (on 1234) Tj ET")
+    if form:
+        stream.update({
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Form"),
+            NameObject("/BBox"): ArrayObject([NumberObject(n) for n in (0, 0, 600, 800)]),
+            NameObject("/Resources"): first["/Resources"],
+        })
+        first[NameObject("/Resources")] = DictionaryObject({
+            NameObject("/XObject"): DictionaryObject({NameObject("/Fm"): writer._add_object(stream)})
+        })
+        stream = DecodedStreamObject()
+        stream.set_data(b"q /Fm Do Q")
+    first[NameObject("/Contents")] = stream
+    other = DecodedStreamObject()
+    other.set_data(b"BT /F1 10 Tf 30 700 Td (X 5678) Tj ET")
+    second[NameObject("/Contents")] = other
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    value = PDFDocumentInput(document_id="ligatures", content=buffer.getvalue())
+    pages = parse_pdf_document(value)
+    assert "Section 1234" in pages[0].text
+    assert "X 5678" in pages[1].text
+    assert parse_pdf_document(value) == pages

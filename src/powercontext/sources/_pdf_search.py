@@ -17,7 +17,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from powercontext._lexical import LexicalRanker, terms
@@ -37,17 +39,32 @@ class _Section:
 _SECTIONS = (
     _Section(
         r"income statement|statements? of (?:income|operations|earnings)|p\s*&\s*l|earnings|"
-        r"(?:net|operating) (?:income|profit)|gross (?:profit|margin)|ebit(?:da)?|profit margin|cost of (?:sales|goods)",
+        r"(?:net|operating) (?:income|profit)|gross (?:profit|margin)|ebit(?:da)?|profit margin|cost of (?:sales|goods)|"
+        r"operating[-\s]+margin|capital[-\s]+intensiv|cash flow conversion|tax rate",
         r"\b(?:statements? of (?:income|operations|earnings)|income statements?|profit and loss)\b",
         ("statement income", "statement operations", "net revenue operating profit"),
     ),
     _Section(
-        r"cash flow|ebitda|capex|depreciation|capital (?:expenditure|spending)|cash (?:provided|generated|used)",
+        r"tax rate|financial performance",
+        r"\b(?:summary of financial (?:performance|results)|selected financial data|income taxes)\b",
+        ("summary financial performance", "effective tax rate", "income taxes"),
+        tabular=False,
+    ),
+    _Section(
+        r"(?:product|service) categor|segment.*(?:sales|revenue)|(?:sales|revenue).*segment",
+        r"\b(?:summary of )?(?:business )?segment (?:data|information|results)\b",
+        ("business segment data", "segment revenue", "segment sales"),
+        tabular=False,
+    ),
+    _Section(
+        r"cash flow|ebitda|capex|depreciation|capital (?:expenditure|spending)|cash (?:provided|generated|used)|"
+        r"capital[-\s]+intensiv",
         r"\b(?:statements? of cash flows?|cash flows? statements?)\b",
         ("statement cash flows", "depreciation amortization", "capital expenditures"),
     ),
     _Section(
-        r"balance sheet|assets?|liabilit|working capital|current ratio|quick ratio|debt|receivables?|inventor",
+        r"balance sheet|assets?|liabilit|working capital|current ratio|quick ratio|debt|receivables?|inventor|"
+        r"capital[-\s]+intensiv",
         r"\b(?:balance sheets?|statements? of financial (?:position|condition))\b",
         ("balance sheet", "financial position", "current assets liabilities"),
     ),
@@ -57,9 +74,9 @@ _SECTIONS = (
         ("statement equity", "dividends repurchases"),
     ),
     _Section(
-        r"geograph|countr|territor|operates|regions?|segments?",
+        r"geograph|countr|territor|operates|regions?|segments?|(?:useful|relevant) metric",
         r"\b(?:geograph\w*|our divisions|our business|business overview|operating segments?|"
-        r"reportable segments?|description of (?:the )?business|item\s*1[.:]?\s*business)\b",
+        r"reportable segments?|business segments?|description of (?:the )?business|item\s*1[.:]?\s*business)\b",
         ("geographic countries", "segments divisions", "countries territories", "business overview"),
         tabular=False,
     ),
@@ -78,6 +95,16 @@ _SYNONYMS = (
     (r"operating income", "operating profit"),
     (r"net profit", "net income earnings"),
     (r"cogs|cost of goods", "cost goods sales revenues"),
+    (r"\bm\s*&\s*a\b|mergers? and acquisitions?", "acquisitions divestitures organic growth"),
+    (r"capital[-\s]+intensiv", "property plant equipment capital expenditures assets revenue"),
+    (r"operating[-\s]+margin", "operating income revenue sales"),
+    (r"cash flow conversion", "operating cash flow net income capital expenditures"),
+    (r"customers?|clients?", "customers clients purchasers buyers sales"),
+    (r"concentration", "concentration significant largest major percent revenues"),
+    (r"retain|retention", "retention retain attrition loyalty existing members"),
+    (r"cyclical|cyclicality", "cyclical cycles economic downturn demand"),
+    (r"tax rate", "effective income tax expense benefit provision rate"),
+    (r"legal|litigation|lawsuit|battles", "litigation lawsuit proceedings claims contingencies settlement"),
 )
 _INSTRUCTIONS = frozenset(
     terms(
@@ -100,6 +127,7 @@ def plan_pdf_query(question: str) -> PDFSearchQuery:
     """Split a multi-statement question into bounded independent recall probes."""
 
     normalized = re.sub(r"\bfy\s*(?=\d{4}\b)", "", question.casefold())
+    normalized = re.sub(r"\bcash[-\s]*flows?\b", "cash flow", normalized)
     sections = tuple(section for section in _SECTIONS if re.search(section.trigger, normalized))
     weights = {word: 1.0 for word in terms(normalized) if word not in _INSTRUCTIONS and not word.isdecimal()}
     probes = [question]
@@ -108,6 +136,9 @@ def plan_pdf_query(question: str) -> PDFSearchQuery:
     for trigger, expansion in _SYNONYMS:
         if re.search(trigger, normalized):
             probes.append(expansion)
+            # FTS backends may interpret multiword probes conjunctively.
+            # Separate alternatives retrieve pages using only one synonym.
+            probes.extend(expansion.split())
             for word in terms(expansion):
                 weights.setdefault(word, 0.5)
     for section in sections:
@@ -128,11 +159,42 @@ def _document_priors(hits: list[MemoryHit], question: str) -> list[float]:
     }
     documents = [hit.text.partition("\n")[0] for hit in hits]
     named = set()
+    aliases_by_document = {}
     for document in set(documents):
         prefix = re.split(r"(?:19|20)\d{2}", document, maxsplit=1)[0]
-        company = re.sub(r"[^a-z0-9]", "", prefix.casefold())
-        if len(company) >= 2 and company in query_names:
+        words = re.findall(r"[a-z0-9]+", prefix.casefold())
+        aliases = {"".join(words)}
+        # Legal suffixes are commonly present in document identifiers but
+        # omitted in questions. Keep digits and substantive name words intact.
+        while len(words) > 1 and words[-1] in {
+            "inc",
+            "incorporated",
+            "corp",
+            "corporation",
+            "ltd",
+            "limited",
+            "plc",
+            "llc",
+            "co",
+            "company",
+        }:
+            words.pop()
+            aliases.add("".join(words))
+        aliases_by_document[document] = aliases
+        if any(len(company) >= 2 and company in query_names for company in aliases):
             named.add(document)
+    # Infer exchange symbols from the retrieved text, not a company/ticker
+    # dictionary. Require the document's own name immediately before the
+    # exchange annotation so a counterparty ticker alone is not an identity.
+    for hit, document in zip(hits, documents, strict=True):
+        body = hit.text.partition("\n")[2]
+        for match in re.finditer(r"\b(?:NYSE|NASDAQ|AMEX|LSE|TSX|ASX|HKEX)\s*:\s*([A-Z][A-Z0-9.-]{0,9})\b", body):
+            symbol = re.sub(r"[^a-z0-9]", "", match[1].casefold())
+            if symbol not in query_names:
+                continue
+            context = re.sub(r"[^a-z0-9]", "", body[max(0, match.start() - 200) : match.start()].casefold())
+            if any(len(alias) >= 2 and alias in context for alias in aliases_by_document[document]):
+                named.add(document)
     years = set(re.findall(r"(?:19|20)\d{2}", question))
     return [
         (0.02 if named and document not in named else 1.0)
@@ -141,10 +203,22 @@ def _document_priors(hits: list[MemoryHit], question: str) -> list[float]:
     ]
 
 
+def _heading_lines(body: str) -> Iterator[tuple[int, str]]:
+    lines = [" ".join(line.split()) for line in body.splitlines()]
+    for position in range(len(lines)):
+        combined = ""
+        for line in lines[position : position + 3]:
+            if not line:
+                break
+            combined = f"{combined} {line}".strip()
+            if len(combined) > 160:
+                break
+            yield position, combined
+
+
 def _heading_score(body: str, section: _Section) -> float:
     matches = []
-    for position, line in enumerate(body.splitlines()):
-        line = " ".join(line.split())
+    for position, line in _heading_lines(body):
         match = re.search(section.heading, line, re.I)
         if len(line) > 160 or match is None:
             continue
@@ -177,12 +251,12 @@ def _heading_affixes(prefix: str, suffix: str, *, tabular: bool) -> bool:
             )
         )
     return bool(
-        re.fullmatch(r"(?:(?:item|note)\s*\d+[a-z]?\s*[.:\u2014\u2013-]?\s*)?", prefix, re.I)
+        re.fullmatch(r"(?:(?:item|note|table)\s*\d+[a-z]?\s*[.:\u2014\u2013-]?\s*)?", prefix, re.I)
         and not re.search(r"\b(?:is|are|was|were|has|have|which|that|could|may|include)\b", suffix, re.I)
     )
 
 
-def _lexical_scores(bodies: list[str], weights: dict[str, float]) -> list[float]:
+def _lexical_scores(bodies: list[str], weights: dict[str, float], question: str = "") -> list[float]:
     ranker = LexicalRanker(bodies)
     passages: list[str] = []
     owners: list[int] = []
@@ -195,7 +269,21 @@ def _lexical_scores(bodies: list[str], weights: dict[str, float]) -> list[float]
     passage_scores = [0.0] * len(bodies)
     for index, owner in enumerate(owners):
         passage_scores[owner] = max(passage_scores[owner], passage_ranker.score(index, weights))
-    return [ranker.score(index, weights) + 0.35 * passage_scores[index] for index in range(len(bodies))]
+    # Preserve local phrases: repeated isolated words in a long report should
+    # not outweigh a short passage discussing the actual requested concept.
+    query_terms = [word for word in terms(question) if word in weights and weights[word] >= 1]
+    pairs = set(pairwise(query_terms))
+    phrase_scores = []
+    for body in bodies:
+        tokens = terms(body)
+        adjacent = set(pairwise(tokens))
+        phrase_scores.append(
+            sum(min(ranker.idf.get(left, 0), ranker.idf.get(right, 0)) for left, right in pairs & adjacent)
+        )
+    return [
+        ranker.score(index, weights) + 0.35 * passage_scores[index] + 2 * phrase_scores[index]
+        for index in range(len(bodies))
+    ]
 
 
 def rank_pdf_candidates(hits: list[MemoryHit], query: PDFSearchQuery, limit: int) -> list[int]:
@@ -203,7 +291,14 @@ def rank_pdf_candidates(hits: list[MemoryHit], query: PDFSearchQuery, limit: int
 
     bodies = [hit.text.partition("\n")[2] for hit in hits]
     priors = _document_priors(hits, query.question)
-    lexical = _lexical_scores(bodies, query.weights)
+    # A company name selects the document; its repetition in headers, stock
+    # plans and boilerplate is not evidence relevance within that document.
+    identity_terms = set()
+    for hit in hits:
+        prefix = re.split(r"(?:19|20)\d{2}", hit.text.partition("\n")[0], maxsplit=1)[0]
+        identity_terms.update(terms(prefix.replace("_", " ")))
+    weights = {word: weight for word, weight in query.weights.items() if word not in identity_terms}
+    lexical = _lexical_scores(bodies, weights or query.weights, query.question)
     maximum = max(lexical, default=0) or 1
     scores = [score / maximum * prior for score, prior in zip(lexical, priors, strict=True)]
     rankings = []

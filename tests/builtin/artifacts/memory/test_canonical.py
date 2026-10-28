@@ -141,6 +141,18 @@ def test_retrieval_query_is_not_held_to_the_entry_body_byte_bound() -> None:
         normalize_query("   ")
 
 
+def test_captured_pdf_text_has_a_bounded_lossless_body() -> None:
+    refs = ({"source_type": "pdf-page", "source_id": "pdf:captured-page"},)
+    body = "cafe\u0301 financial detail " * 600
+    assert normalize_text(body, source_refs=refs) == body.strip()
+    assert len(entry_content_hash(kind="page", text=body, source_refs=refs, artifact_refs=())) == 64
+    with pytest.raises(ValueError, match="1048576 UTF-8 bytes"):
+        normalize_text("x" * 1_048_577, source_refs=refs)
+    # A lookalike ID on an ordinary Source must not select the page policy.
+    with pytest.raises(ValueError, match="8192 UTF-8 bytes"):
+        normalize_text(body, source_refs=({"source_type": "file", "source_id": "pdf:captured-page"},))
+
+
 def test_embedding_validation_rejects_wrong_or_non_finite_vectors() -> None:
     assert validate_embedding((1, 2.5, -3), dimension=3) == (1.0, 2.5, -3.0)
     with pytest.raises(ValueError, match="3 dimensions"):
